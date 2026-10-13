@@ -1,27 +1,26 @@
 import { MessageCircle, Sparkles } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { useState } from 'react'
 import { whatsappLink } from '../lib/format'
 import { useSite } from '../lib/site-context'
+import type { TrayPreviewSpec } from '../types'
 import { BrandPattern } from './BrandPattern'
+import { TrayPreview } from './TrayPreview'
 
 const occasions = ['عرس', 'خطوبة', 'مولود', 'نجاح', 'عيد ميلاد']
 
-/**
- * "جرّب اسمك": المستخدم بيكتب الاسم والتاريخ، وبينكتبوا مباشرة على قرص الصينية بالصورة.
- * مكان القرص بالصورة المربعة مقاس بالنسبة المئوية (شوف public/images/products/tray-white-names-square.jpg).
- */
-const DISC = { cx: 47.7, cy: 48.2, w: 26.4, h: 22.4 }
+/** "جرّب اسمك": المستخدم بيكتب الاسم والتاريخ، وبينكتبوا مباشرة على قرص الصينية بالصورة. */
+const SPEC: TrayPreviewSpec = {
+  image: '/images/products/tray-white-names-square.jpg',
+  disc: { cx: 47.7, cy: 48.2, w: 26.4, h: 22.4 },
+  main: 'names',
+}
 
 export function NameOnTray() {
   const site = useSite()
   const [name, setName] = useState('منى ومحمود')
   const [date, setDate] = useState('25.9.26')
   const [occasion, setOccasion] = useState(occasions[0])
-
-  const shown = name.trim() || 'اسمك هون'
-  // كل ما طال الاسم، بيصغر الخط عشان يضل جوّا القرص
-  const nameSize = Math.max(2.8, 6.4 - shown.length * 0.2)
 
   const message = `مرحبا الليدي شوكولات 🍫\nحابب أطلب صينية ${occasion}\nالاسم: ${name || '—'}\nالتاريخ: ${date || '—'}`
 
@@ -38,41 +37,14 @@ export function NameOnTray() {
           className="relative mx-auto w-full max-w-md"
         >
           <div className="rounded-[2.5rem] border border-sand/25 p-3">
-            <div className="relative overflow-hidden rounded-[2rem] [container-type:inline-size]">
-              <img src="/images/products/tray-white-names-square.jpg" alt="صينية شوكولا عليها الاسم اللي كتبته" className="aspect-square w-full object-cover" />
-              <div
-                className="absolute grid place-items-center rounded-[50%] text-center shadow-[inset_0_-2px_6px_rgb(0_0_0/0.12),0_1px_2px_rgb(0_0_0/0.25)]"
-                style={{
-                  left: `${DISC.cx - DISC.w / 2}%`,
-                  top: `${DISC.cy - DISC.h / 2}%`,
-                  width: `${DISC.w}%`,
-                  height: `${DISC.h}%`,
-                  background: 'radial-gradient(circle at 40% 35%, #fdfbf7, #ece6dc)',
-                }}
-              >
-                <div className="flex flex-col items-center px-[6%]">
-                  <span className="text-[1.8cqw] leading-none text-cocoa/60">{occasion === 'عرس' || occasion === 'خطوبة' ? 'على بركة الله' : 'ألف مبروك'}</span>
-                  <AnimatePresence mode="popLayout">
-                    <motion.span
-                      key={shown}
-                      initial={{ opacity: 0, y: 4, filter: 'blur(3px)' }}
-                      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.25 }}
-                      className="font-display block leading-[1.25] text-cocoa-deep"
-                      style={{ fontSize: `${nameSize}cqw` }}
-                    >
-                      {shown}
-                    </motion.span>
-                  </AnimatePresence>
-                  {date && (
-                    <span dir="ltr" className="font-latin text-[2.2cqw] leading-none text-cocoa-deep/80">
-                      {date}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+            <TrayPreview
+              spec={SPEC}
+              top={occasion === 'عرس' || occasion === 'خطوبة' ? 'على بركة الله' : 'ألف مبروك'}
+              main={name}
+              bottom={date}
+              alt="صينية شوكولا عليها الاسم اللي كتبته"
+              className="rounded-[2rem]"
+            />
           </div>
           <span className="font-display absolute -top-4 -right-2 rotate-[8deg] rounded-full bg-caramel px-4 py-1.5 text-lg text-cocoa-deep shadow-lg">
             معاينة مباشرة

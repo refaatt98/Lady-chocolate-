@@ -1,8 +1,9 @@
-import { Menu, MessageCircle, X } from 'lucide-react'
+import { Menu, MessageCircle, ShoppingBag, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { whatsappLink } from '../lib/format'
+import { useOrder } from '../lib/order'
 import { useSite } from '../lib/site-context'
 import { Logo } from './Logo'
 
@@ -17,6 +18,7 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const site = useSite()
+  const order = useOrder()
   const location = useLocation()
 
   useEffect(() => setOpen(false), [location])
@@ -78,6 +80,29 @@ export function Header() {
             <MessageCircle className="size-4" aria-hidden />
             اطلب واتساب
           </a>
+          {/* زر الطلبية — id بيستعمله أنيميشن "الطيران للشنطة" بصفحة المنتج */}
+          <button
+            id="order-bag"
+            type="button"
+            onClick={() => order.setOpen(true)}
+            aria-label={`طلبيتي (${order.count})`}
+            className="relative grid size-11 place-items-center rounded-full border border-sand-deep/60 text-olive transition hover:bg-olive hover:text-cream"
+          >
+            <ShoppingBag className="size-5" />
+            <AnimatePresence>
+              {order.count > 0 && (
+                <motion.span
+                  key={order.count}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [1.5, 1] }}
+                  exit={{ scale: 0 }}
+                  className="absolute -top-1 -left-1 grid size-5 place-items-center rounded-full bg-cocoa text-[0.65rem] text-cream"
+                >
+                  {order.count}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

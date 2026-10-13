@@ -26,6 +26,20 @@ export interface CustomizationField {
   maxLength?: number
 }
 
+/**
+ * معاينة الاسم على القرص: صورة مربعة للصينية، ومكان القرص فيها بالنسبة المئوية.
+ * top/main/bottom = أي حقل تخصيص بينكتب فوق / بالنص (كبير) / تحت.
+ */
+export interface TrayPreviewSpec {
+  image: string
+  disc: { cx: number; cy: number; w: number; h: number }
+  /** إذا القرص فيه رسمة بالنص التحتاني، منغطي بس الجزء الفوقاني لحد هالنسبة */
+  coverTo?: number
+  top?: string
+  main: string
+  bottom?: string
+}
+
 export interface Product {
   id: string
   slug: string
@@ -39,6 +53,7 @@ export interface Product {
   sizes: ProductSize[]
   ingredients: string[]
   customization?: CustomizationField[]
+  preview?: TrayPreviewSpec
   featured: boolean
   badge?: string
 }
@@ -53,4 +68,20 @@ export interface SiteInfo {
   instagram: string
   address: string
   hours: string
+}
+
+/** سطر بالطلبية (السلة) — بينبعت كله برسالة واتساب وحدة */
+export interface OrderItem {
+  key: string
+  productId: string
+  slug: string
+  name: string
+  image: string
+  sizeLabel: string
+  pieces: number
+  unitPrice: number
+  qty: number
+  /** نصوص التخصيص: [اسم الحقل، القيمة] */
+  details: [string, string][]
+  eventDate?: string
 }

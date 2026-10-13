@@ -1,13 +1,16 @@
 import { Outlet } from 'react-router'
+import { OrderProvider } from '../lib/order'
 import { SiteProvider } from '../lib/site-context'
 import { Footer } from './Footer'
 import { Header } from './Header'
+import { OrderDrawer } from './OrderDrawer'
 import { Preloader } from './Preloader'
 import { ScrollToTop } from './ScrollToTop'
 
 export function Layout() {
   return (
     <SiteProvider>
+      <OrderProvider>
       <ScrollToTop />
       <Preloader />
       <div aria-hidden className="grain pointer-events-none fixed inset-0 z-[60]" />
@@ -18,6 +21,8 @@ export function Layout() {
         </main>
         <Footer />
       </div>
+      <OrderDrawer />
+      </OrderProvider>
     </SiteProvider>
   )
 }

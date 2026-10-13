@@ -42,6 +42,16 @@ public/images/  صور المنتجات
 - **المنتجات:** بـ `src/data/products.ts`، والصور بـ `public/images/products/`.
 - **الأقسام:** بـ `src/data/categories.ts`.
 
+## الطلب
+
+ما في دفع بالموقع. الزبون بيعبّي "طلبيتي" (محفوظة بالمتصفح)، وبعدين بيبعتها كلها برسالة واتساب وحدة.
+رقم الواتساب بـ `src/data/site.ts`.
+
+## الرفع على Netlify
+
+ملف `netlify.toml` جاهز. من Netlify: **Add new site ← Import an existing project ← GitHub**،
+اختار الريبو والفرع، والإعدادات بتنقرأ لحالها (build: `npm run build`، publish: `dist`).
+
 ## ربط Supabase لاحقًا
 
 الصفحات ما بتقرأ من `src/data/` مباشرة. كلها بتستدعي دوال `src/lib/api.ts`.
