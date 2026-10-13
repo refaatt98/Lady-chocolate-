@@ -9,12 +9,16 @@ const ProductPage = lazy(() => import('./pages/ProductPage').then((m) => ({ defa
 const CartPage = lazy(() => import('./pages/CartPage').then((m) => ({ default: m.CartPage })))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
+const AdminApp = lazy(() => import('./pages/admin/AdminApp').then((m) => ({ default: m.AdminApp })))
+
 const PageFallback = () => <div className="min-h-[60vh]" />
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* لوحة التحكم — بدون هيدر وفوتر الموقع */}
+        <Route path="admin/*" element={<Suspense fallback={<PageFallback />}><AdminApp /></Suspense>} />
         <Route element={<Layout />}>
           <Route index element={<Suspense fallback={<PageFallback />}><HomePage /></Suspense>} />
           <Route path="shop" element={<Suspense fallback={<PageFallback />}><ShopPage /></Suspense>} />

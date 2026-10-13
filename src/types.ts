@@ -8,6 +8,7 @@ export interface Category {
   description: string
   /** لون الكرت المعلق (أي لون من tokens) */
   tone: 'milk' | 'dark' | 'white' | 'caramel' | 'olive'
+  sort?: number
 }
 
 /** حجم أو خيار للمنتج، بسعره */
@@ -20,6 +21,7 @@ export interface ProductSize {
 
 /** حقل تخصيص (اسم، تاريخ، عبارة...) بينضاف لرسالة الواتساب */
 export interface CustomizationField {
+  /** مفتاح إنجليزي (name, date...) — بيستعمله TrayPreviewSpec */
   id: string
   label: string
   placeholder: string
@@ -56,6 +58,9 @@ export interface Product {
   preview?: TrayPreviewSpec
   featured: boolean
   badge?: string
+  /** مخفي عن الزبائن إذا false (بيضل بلوحة التحكم) */
+  active?: boolean
+  sort?: number
 }
 
 export interface SiteInfo {
@@ -108,3 +113,22 @@ export interface CheckoutInfo {
   giftMessage: string
   notes: string
 }
+
+/* ---------------- لوحة التحكم ---------------- */
+
+export type OrderStatus = 'new' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+
+/** طلب محفوظ بقاعدة البيانات */
+export interface OrderRecord {
+  id: string
+  reference: string
+  items: OrderItem[]
+  info: CheckoutInfo
+  total: number
+  status: OrderStatus
+  adminNote: string
+  createdAt: string
+}
+
+/** شو بيبعت الأدمن لما يحفظ منتج (السعر بينحسب من أرخص حجم) */
+export type ProductInput = Omit<Product, 'id' | 'price'> & { id?: string }
