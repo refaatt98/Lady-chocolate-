@@ -6,20 +6,22 @@
  * كل لون بيصير متاح كـ class بتيلويند: bg-olive, text-cocoa, border-sand ...
  */
 @theme {
-  /* ألوان الهوية */
-  --color-olive: #4a5639;
-  --color-olive-deep: #333c27;
-  --color-olive-soft: #6b7a55;
-  --color-sand: #c2b8a0;
-  --color-sand-deep: #a89d82;
-  --color-cream: #ede7da;
-  --color-parchment: #f6f2ea;
+  /* ألوان الهوية — نسخة فاتحة وهادية */
+  --color-olive: #6a7a52;
+  --color-olive-deep: #55633f;
+  --color-olive-soft: #8e9c78;
+  --color-sage: #e8ecdf;
+  --color-sage-deep: #cfd7c0;
+  --color-sand: #ddd5c2;
+  --color-sand-deep: #c2b89e;
+  --color-cream: #f4efe5;
+  --color-parchment: #fcf9f3;
 
   /* درجات الشوكولا */
-  --color-cocoa: #6b3e33;
-  --color-cocoa-deep: #3e241d;
-  --color-milk: #9a6a4f;
-  --color-caramel: #b8875f;
+  --color-cocoa: #8b5a47;
+  --color-cocoa-deep: #5c3b2f;
+  --color-milk: #b88a6a;
+  --color-caramel: #d4a97f;
 
   /* الخطوط */
   --font-display: 'Aref Ruqaa', 'IBM Plex Sans Arabic', serif;

@@ -26,14 +26,14 @@ export function DripRibbon() {
 
   return (
     <div ref={ref} className="relative z-10" aria-hidden>
-      <div className="overflow-hidden bg-cocoa py-4 text-cream">
+      <div className="overflow-hidden bg-milk py-4 text-parchment">
         <div dir="ltr" className="flex w-max animate-[marquee_38s_linear_infinite] motion-reduce:animate-none">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex shrink-0 items-center">
               {words.map((w) => (
                 <span key={w} className="flex items-center">
                   <span className="font-display px-6 text-2xl whitespace-nowrap md:text-3xl">{w}</span>
-                  <span className="text-caramel">✦</span>
+                  <span className="text-cream/80">✦</span>
                 </span>
               ))}
             </div>
@@ -46,13 +46,13 @@ export function DripRibbon() {
         className="-mt-px block h-12 w-full origin-top md:h-20"
         style={{ scaleY: stretch }}
       >
-        <path d={dripPath} fill="var(--color-cocoa)" />
+        <path d={dripPath} fill="var(--color-milk)" />
       </motion.svg>
       {/* نقاط بتوقع */}
       {[12, 41, 64, 88].map((left, i) => (
         <span
           key={left}
-          className="fountain-drip absolute top-[calc(100%-1.5rem)] block h-3 w-2 rounded-full bg-cocoa md:top-[calc(100%-2rem)]"
+          className="fountain-drip absolute top-[calc(100%-1.5rem)] block h-3 w-2 rounded-full bg-milk md:top-[calc(100%-2rem)]"
           style={{ left: `${left}%`, animationDelay: `${i * 0.7}s`, ['--drip-distance' as string]: '70px' }}
         />
       ))}

@@ -454,7 +454,7 @@ function Magnifier({ src, alt }: { src: string; alt: string }) {
             initial={{ scale: 0.4, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.4, opacity: 0 }}
-            className="pointer-events-none absolute rounded-full border-4 border-parchment shadow-[0_15px_40px_-10px_rgb(62_36_29/0.7),inset_0_0_0_1px_var(--color-sand-deep)]"
+            className="pointer-events-none absolute rounded-full border-4 border-parchment shadow-[0_15px_40px_-10px_rgb(92_59_47/0.25),inset_0_0_0_1px_var(--color-sand-deep)]"
             style={{
               width: SIZE,
               height: SIZE,
@@ -477,7 +477,7 @@ function AddButton({ onClick, added, className = '', compact = false }: { onClic
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa text-cream shadow-[0_12px_30px_-12px_rgb(107_62_51/0.8)] ${compact ? 'py-3.5' : 'py-4'} ${className}`}
+      className={`group relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa text-cream shadow-[0_12px_30px_-12px_rgb(139_90_71/0.45)] ${compact ? 'py-3.5' : 'py-4'} ${className}`}
     >
       <span className="absolute inset-0 translate-y-full rounded-[50%_50%_0_0] bg-cocoa-deep transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-0 group-hover:rounded-none" />
       <AnimatePresence mode="wait" initial={false}>

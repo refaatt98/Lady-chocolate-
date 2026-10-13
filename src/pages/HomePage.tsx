@@ -134,7 +134,7 @@ function Hero() {
           >
             <Link
               to="/shop"
-              className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa px-8 py-4 text-cream shadow-[0_12px_30px_-12px_rgb(107_62_51/0.8)] sm:w-auto"
+              className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa px-8 py-4 text-cream shadow-[0_12px_30px_-12px_rgb(139_90_71/0.45)] sm:w-auto"
             >
               {/* شوكولا غامقة بتعبي الزر من تحت */}
               <span className="absolute inset-0 translate-y-full rounded-[50%_50%_0_0] bg-cocoa-deep transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-0 group-hover:rounded-none" />
@@ -175,16 +175,16 @@ function Hero() {
             initial={{ clipPath: 'inset(100% 0 0 0 round 999px 999px 0 0)' }}
             animate={{ clipPath: 'inset(0% 0 0 0 round 999px 999px 0 0)' }}
             transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
-            className="relative aspect-[4/5] overflow-hidden rounded-t-full bg-olive-deep shadow-[0_40px_60px_-30px_rgb(51_60_39/0.8)]"
+            className="relative aspect-[4/5] overflow-hidden rounded-t-full bg-sage shadow-[0_40px_60px_-30px_rgb(106_122_82/0.45)]"
           >
-            <BrandPattern className="text-sand/[0.06]" />
-            <div aria-hidden className="absolute inset-x-[10%] bottom-[8%] h-2/3 rounded-full bg-caramel/30 blur-3xl" />
-            <span aria-hidden className="absolute inset-3 rounded-t-full border border-sand/25" />
-            <span aria-hidden className="absolute inset-5 rounded-t-full border border-dashed border-sand/15" />
+            <BrandPattern className="text-olive/[0.06]" />
+            <div aria-hidden className="absolute inset-x-[10%] bottom-[8%] h-2/3 rounded-full bg-caramel/35 blur-3xl" />
+            <span aria-hidden className="absolute inset-3 rounded-t-full border border-olive/20" />
+            <span aria-hidden className="absolute inset-5 rounded-t-full border border-dashed border-olive/15" />
             <ChocolateFountain className="absolute inset-x-[4%] bottom-[3%] w-[92%]" />
           </motion.div>
           {/* عتبة الشباك */}
-          <div aria-hidden className="relative -mx-4 h-4 rounded-sm bg-gradient-to-b from-sand to-sand-deep shadow-[0_10px_20px_-10px_rgb(62_36_29/0.6)]" />
+          <div aria-hidden className="relative -mx-4 h-4 rounded-sm bg-gradient-to-b from-sand to-sand-deep shadow-[0_10px_20px_-10px_rgb(92_59_47/0.25)]" />
 
           <motion.div
             initial={{ scale: 0, rotate: -90 }}
@@ -201,7 +201,7 @@ function Hero() {
                 animate={{ y: [0, -10, 0], rotate: [0, 6, 0] }}
                 transition={{ duration: f.dur, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <ChocolatePetal tone={f.tone} className="w-full drop-shadow-[0_8px_8px_rgb(62_36_29/0.3)]" />
+                <ChocolatePetal tone={f.tone} className="w-full drop-shadow-[0_8px_8px_rgb(92_59_47/0.25)]" />
               </motion.div>
             </motion.div>
           ))}

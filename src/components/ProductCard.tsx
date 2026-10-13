@@ -110,7 +110,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           {/* كرت السعر المعلق */}
           <div className="absolute -bottom-7 left-5 flex origin-top flex-col items-center transition-transform duration-700 ease-[var(--ease-soft)] group-hover:-rotate-12">
             <span aria-hidden className="h-6 w-px bg-caramel" />
-            <span className="relative grid size-[4.75rem] place-items-center rounded-full bg-parchment text-center shadow-[0_8px_20px_-8px_rgb(62_36_29/0.55)] ring-1 ring-sand-deep">
+            <span className="relative grid size-[4.75rem] place-items-center rounded-full bg-parchment text-center shadow-[0_8px_20px_-8px_rgb(92_59_47/0.25)] ring-1 ring-sand-deep">
               <span aria-hidden className="absolute top-1.5 size-2 rounded-full border border-sand-deep" />
               <span className="mt-1.5 text-[0.65rem] leading-none text-cocoa/70">من</span>
               <span className="text-sm leading-none font-semibold text-cocoa">{formatPrice(product.price)}</span>

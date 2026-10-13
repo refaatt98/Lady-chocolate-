@@ -4,7 +4,7 @@ import { useId } from 'react'
 export function RotatingSeal({ className = '', text = 'شوكولا بلجيكية ✦ معمولة باليد ✦ بأساميكم ✦ ' }) {
   const id = useId().replace(/:/g, '')
   return (
-    <div className={`relative grid place-items-center rounded-full bg-cocoa text-cream shadow-[0_15px_35px_-12px_rgb(62_36_29/0.7)] ${className}`}>
+    <div className={`relative grid place-items-center rounded-full bg-cocoa text-cream shadow-[0_15px_35px_-12px_rgb(92_59_47/0.25)] ${className}`}>
       <svg viewBox="0 0 200 200" aria-hidden className="absolute inset-0 size-full animate-[spin_22s_linear_infinite] motion-reduce:animate-none">
         <defs>
           <path id={`c${id}`} d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0" />

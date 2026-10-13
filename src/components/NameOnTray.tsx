@@ -25,8 +25,8 @@ export function NameOnTray() {
   const message = `مرحبا الليدي شوكولات 🍫\nحابب أطلب صينية ${occasion}\nالاسم: ${name || '—'}\nالتاريخ: ${date || '—'}`
 
   return (
-    <section className="relative overflow-hidden bg-olive-deep py-20 text-sand md:py-28">
-      <BrandPattern className="text-sand/[0.05]" />
+    <section className="relative overflow-hidden bg-sage py-20 text-cocoa-deep md:py-28">
+      <BrandPattern className="text-olive/[0.05]" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 md:grid-cols-2 md:gap-16">
         {/* الصورة مع القرص الحي */}
         <motion.div
@@ -36,7 +36,7 @@ export function NameOnTray() {
           transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
           className="relative mx-auto w-full max-w-md"
         >
-          <div className="rounded-[2.5rem] border border-sand/25 p-3">
+          <div className="rounded-[2.5rem] border border-olive/20 bg-parchment/60 p-3">
             <TrayPreview
               spec={SPEC}
               top={occasion === 'عرس' || occasion === 'خطوبة' ? 'على بركة الله' : 'ألف مبروك'}
@@ -58,19 +58,19 @@ export function NameOnTray() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p dir="ltr" className="font-latin text-center text-xs tracking-[0.4em] text-sand/60 uppercase md:text-right">
+          <p dir="ltr" className="font-latin text-center text-xs tracking-[0.4em] text-cocoa/60 uppercase md:text-right">
             Make it yours
           </p>
-          <h2 className="font-display mt-3 text-center text-4xl leading-snug text-cream sm:text-5xl md:text-right">
+          <h2 className="font-display mt-3 text-center text-4xl leading-snug text-olive sm:text-5xl md:text-right">
             جرّب اسمك
             <br />
             على الصينية
           </h2>
-          <p className="mt-4 text-center leading-loose text-sand/75 md:text-right">اكتب، وشوف كيف رح تطلع صينيتك قبل ما تطلبها.</p>
+          <p className="mt-4 text-center leading-loose text-cocoa-deep/70 md:text-right">اكتب، وشوف كيف رح تطلع صينيتك قبل ما تطلبها.</p>
 
           <div className="mt-8 space-y-6">
             <fieldset>
-              <legend className="mb-3 text-sm text-sand/70">المناسبة</legend>
+              <legend className="mb-3 text-sm text-cocoa/70">المناسبة</legend>
               <div className="flex flex-wrap gap-2">
                 {occasions.map((o) => (
                   <button
@@ -79,7 +79,7 @@ export function NameOnTray() {
                     aria-pressed={occasion === o}
                     onClick={() => setOccasion(o)}
                     className={`rounded-full border px-4 py-2 text-sm transition ${
-                      occasion === o ? 'border-caramel bg-caramel text-cocoa-deep' : 'border-sand/30 text-sand/80 hover:border-sand/60'
+                      occasion === o ? 'border-olive bg-olive text-parchment' : 'border-olive/25 bg-parchment/60 text-cocoa-deep/80 hover:border-olive/50'
                     }`}
                   >
                     {o}
@@ -89,25 +89,25 @@ export function NameOnTray() {
             </fieldset>
 
             <label className="block">
-              <span className="text-sm text-sand/70">الاسم أو الأسماء</span>
+              <span className="text-sm text-cocoa/70">الاسم أو الأسماء</span>
               <input
                 value={name}
                 maxLength={22}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="مثلًا: منى ومحمود"
-                className="font-display mt-1 w-full border-b border-sand/30 bg-transparent py-2 text-3xl text-cream placeholder:text-sand/30 focus:border-caramel focus:outline-none"
+                className="font-display mt-1 w-full border-b border-olive/25 bg-transparent py-2 text-3xl text-cocoa-deep placeholder:text-cocoa/30 focus:border-olive focus:outline-none"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm text-sand/70">التاريخ (اختياري)</span>
+              <span className="text-sm text-cocoa/70">التاريخ (اختياري)</span>
               <input
                 value={date}
                 maxLength={12}
                 dir="ltr"
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="25.9.26"
-                className="font-latin mt-1 w-full border-b border-sand/30 bg-transparent py-2 text-right text-2xl text-cream placeholder:text-sand/30 focus:border-caramel focus:outline-none"
+                className="font-latin mt-1 w-full border-b border-olive/25 bg-transparent py-2 text-right text-2xl text-cocoa-deep placeholder:text-cocoa/30 focus:border-olive focus:outline-none"
               />
             </label>
           </div>
@@ -117,7 +117,7 @@ export function NameOnTray() {
               href={whatsappLink(site.whatsapp, message)}
               target="_blank"
               rel="noreferrer"
-              className="group mt-9 flex w-full items-center justify-center gap-2 rounded-full bg-caramel px-8 py-4 text-cocoa-deep shadow-[0_15px_35px_-15px_rgb(184_135_95/0.9)] transition hover:bg-cream sm:w-auto sm:inline-flex"
+              className="group mt-9 flex w-full items-center justify-center gap-2 rounded-full bg-olive px-8 py-4 text-parchment shadow-[0_15px_35px_-15px_rgb(106_122_82/0.9)] transition hover:bg-olive-deep sm:w-auto sm:inline-flex"
             >
               <MessageCircle className="size-5" aria-hidden />
               اطلبها بهالاسم على واتساب

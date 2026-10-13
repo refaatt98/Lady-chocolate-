@@ -255,39 +255,39 @@ export function CartPage() {
 
         {/* الملخص */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="relative overflow-hidden rounded-[2rem] bg-olive-deep p-6 text-sand sm:p-8">
-            <h2 className="font-display text-3xl text-cream">الملخص</h2>
+          <div className="relative overflow-hidden rounded-[2rem] border border-sage-deep bg-sage p-6 text-cocoa-deep sm:p-8">
+            <h2 className="font-display text-3xl text-olive">الملخص</h2>
             <ul className="mt-5 space-y-2 text-sm">
               {items.map((i) => (
                 <li key={i.key} className="flex justify-between gap-3">
                   <span className="truncate">
-                    {i.name} <span className="text-sand/60">× {i.qty}</span>
+                    {i.name} <span className="text-cocoa/60">× {i.qty}</span>
                   </span>
                   <span className="shrink-0">{formatPrice(i.unitPrice * i.qty)}</span>
                 </li>
               ))}
-              <li className="flex justify-between gap-3 text-sand/70">
+              <li className="flex justify-between gap-3 text-cocoa/70">
                 <span>{info.method === 'delivery' ? 'التوصيل' : 'الاستلام'}</span>
                 <span>{info.method === 'delivery' ? 'منأكده معك' : 'مجاني'}</span>
               </li>
             </ul>
-            <div className="mt-5 flex items-end justify-between border-t border-sand/20 pt-5">
-              <span className="text-sand/70">المجموع التقريبي</span>
-              <span className="font-display text-4xl text-cream">{formatPrice(total)}</span>
+            <div className="mt-5 flex items-end justify-between border-t border-olive/15 pt-5">
+              <span className="text-cocoa/70">المجموع التقريبي</span>
+              <span className="font-display text-4xl text-cocoa">{formatPrice(total)}</span>
             </div>
 
             <button
               type="button"
               onClick={send}
               disabled={sending}
-              className="group relative mt-6 flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-caramel py-4 text-lg text-cocoa-deep shadow-[0_15px_35px_-15px_rgb(184_135_95/0.9)] transition hover:bg-cream disabled:opacity-70"
+              className="group relative mt-6 flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-olive py-4 text-lg text-parchment shadow-[0_15px_35px_-15px_rgb(106_122_82/0.9)] transition hover:bg-olive-deep disabled:opacity-70"
             >
               <MessageCircle className="size-5" aria-hidden />
               {sending ? 'لحظة...' : 'ابعت الطلب على واتساب'}
             </button>
-            {Object.keys(errors).length > 0 && <p className="mt-3 text-center text-sm text-caramel">في كم خانة ناقصة فوق — صلّحها وجرّب كمان مرة</p>}
+            {Object.keys(errors).length > 0 && <p className="mt-3 text-center text-sm text-cocoa">في كم خانة ناقصة فوق — صلّحها وجرّب كمان مرة</p>}
 
-            <button type="button" onClick={() => setShowPreview((v) => !v)} className="mt-5 flex w-full items-center justify-center gap-1 text-xs text-sand/60 hover:text-sand">
+            <button type="button" onClick={() => setShowPreview((v) => !v)} className="mt-5 flex w-full items-center justify-center gap-1 text-xs text-cocoa/60 hover:text-cocoa">
               شوف شكل الرسالة
               <ChevronDown className={`size-4 transition-transform ${showPreview ? 'rotate-180' : ''}`} />
             </button>
@@ -396,7 +396,7 @@ function Card({ title, n, action, children }: { title: string; n: string; action
         </h2>
         {action}
       </div>
-      <div className="rounded-[1.75rem] border border-sand bg-parchment/70 p-5 shadow-[0_20px_40px_-30px_rgb(62_36_29/0.4)] sm:p-7">{children}</div>
+      <div className="rounded-[1.75rem] border border-sand bg-parchment/70 p-5 shadow-[0_20px_40px_-30px_rgb(92_59_47/0.25)] sm:p-7">{children}</div>
     </section>
   )
 }
