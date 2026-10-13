@@ -6,22 +6,24 @@
  * كل لون بيصير متاح كـ class بتيلويند: bg-olive, text-cocoa, border-sand ...
  */
 @theme {
-  /* ألوان الهوية — نسخة فاتحة وهادية */
-  --color-olive: #6a7a52;
-  --color-olive-deep: #55633f;
-  --color-olive-soft: #8e9c78;
-  --color-sage: #e8ecdf;
-  --color-sage-deep: #cfd7c0;
-  --color-sand: #ddd5c2;
-  --color-sand-deep: #c2b89e;
-  --color-cream: #f4efe5;
-  --color-parchment: #fcf9f3;
+  /* ألوان الهوية — من لوحة Lady Chocolate by Rawa
+   *   #878f69 مريمية · #626a46 زيتي · #cec4b0 بيج · #aba38a بيج غامق · #7a5244 بني
+   * البيج هو الغالب: الخلفيات كلها درجات منه، والأخضر والبني للتفاصيل بس. */
+  --color-olive: #626a46;
+  --color-olive-deep: #555c3c;
+  --color-olive-soft: #878f69;
+  --color-sage: #dcdac6;
+  --color-sage-deep: #c4c3a9;
+  --color-sand: #cec4b0;
+  --color-sand-deep: #aba38a;
+  --color-cream: #e7e0d1;
+  --color-parchment: #f2ede3;
 
   /* درجات الشوكولا */
-  --color-cocoa: #8b5a47;
-  --color-cocoa-deep: #5c3b2f;
-  --color-milk: #b88a6a;
-  --color-caramel: #d4a97f;
+  --color-cocoa: #7a5244;
+  --color-cocoa-deep: #5a3d33;
+  --color-milk: #9c7262;
+  --color-caramel: #b8977a;
 
   /* الخطوط */
   --font-display: 'Aref Ruqaa', 'IBM Plex Sans Arabic', serif;
