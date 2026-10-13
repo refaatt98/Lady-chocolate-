@@ -1,10 +1,16 @@
-import { ArrowLeft, Gift, Hand, MessageCircle, PenLine, ShoppingBag, Sparkles } from 'lucide-react'
-import { motion } from 'motion/react'
+import { ArrowLeft, MessageCircle, PenLine, ShoppingBag } from 'lucide-react'
+import { motion, useScroll, useTransform } from 'motion/react'
+import { useRef } from 'react'
 import { Link } from 'react-router'
 import { BrandPattern } from '../components/BrandPattern'
-import { CategoryTag } from '../components/CategoryTag'
+import { CategoryFlower } from '../components/CategoryFlower'
 import { ChocolateFountain } from '../components/ChocolateFountain'
+import { ChocolatePetal } from '../components/ChocolatePetal'
+import { DripRibbon } from '../components/DripRibbon'
+import { Journey } from '../components/Journey'
+import { NameOnTray } from '../components/NameOnTray'
 import { ProductCard } from '../components/ProductCard'
+import { RotatingSeal } from '../components/RotatingSeal'
 import { SectionHeading } from '../components/SectionHeading'
 import { getCategories, getFeaturedProducts } from '../lib/api'
 import { whatsappLink } from '../lib/format'
@@ -17,9 +23,11 @@ export function HomePage() {
   return (
     <>
       <Hero />
+      <DripRibbon />
       <Categories />
       <FeaturedProducts />
-      <Story />
+      <Journey />
+      <NameOnTray />
       <HowToOrder />
     </>
   )
@@ -27,49 +35,95 @@ export function HomePage() {
 
 /* ------------------------------------------------------------------ */
 
+/** بتلات شوكولا طايرة حوالين القوس — كل وحدة بسرعة مختلفة مع السكرول */
+const floating = [
+  { cls: 'top-[8%] -right-4 w-9 rotate-[24deg] md:-right-10 md:w-12', depth: -80, tone: 'milk' as const, dur: 6 },
+  { cls: 'top-[38%] -left-5 w-7 -rotate-[30deg] md:-left-12 md:w-10', depth: -140, tone: 'dark' as const, dur: 7 },
+  { cls: 'bottom-[22%] -right-6 w-8 rotate-[150deg] md:-right-14 md:w-11', depth: -60, tone: 'dark' as const, dur: 5.5 },
+  { cls: '-top-4 left-[18%] w-6 -rotate-[60deg] md:w-8', depth: -110, tone: 'milk' as const, dur: 6.5 },
+]
+
 function Hero() {
   const site = useSite()
+  const ref = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
+  const archY = useTransform(scrollYProgress, [0, 1], [0, 80])
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -40])
+  const p0 = useTransform(scrollYProgress, [0, 1], [0, floating[0].depth])
+  const p1 = useTransform(scrollYProgress, [0, 1], [0, floating[1].depth])
+  const p2 = useTransform(scrollYProgress, [0, 1], [0, floating[2].depth])
+  const p3 = useTransform(scrollYProgress, [0, 1], [0, floating[3].depth])
+  const parallax = [p0, p1, p2, p3]
 
   return (
-    <section className="relative -mt-20 overflow-hidden pt-20">
-      {/* الكاليغرافي المفرّغ على الطرف متل الهوية */}
-      <div aria-hidden className="absolute inset-y-0 -right-16 hidden items-center text-olive/[0.09] md:flex">
-        <span className="calligraphy-outline block -rotate-90 text-[18rem] whitespace-nowrap">الليدي</span>
+    <section ref={ref} className="relative -mt-20 overflow-hidden pt-20">
+      {/* كاليغرافي ضخم مفرّغ بالخلفية */}
+      <div aria-hidden className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-olive/[0.07]">
+        <span className="calligraphy-outline block text-[42vw] whitespace-nowrap md:text-[30vw]">شوكولات</span>
       </div>
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 pt-6 pb-24 sm:px-6 md:grid-cols-[1.05fr_1fr] md:gap-10 md:pt-10 md:pb-28">
-        <div className="order-2 text-center md:order-1 md:text-right">
-          <motion.p
-            dir="ltr"
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pt-8 pb-16 sm:px-6 md:grid-cols-[1.1fr_1fr] md:gap-8 md:pt-12 md:pb-24">
+        {/* النص */}
+        <motion.div style={{ y: textY }} className="order-2 text-center md:order-1 md:text-right">
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 1 }}
-            className="font-latin text-xs tracking-[0.45em] text-cocoa/70 uppercase md:text-right"
+            className="flex items-center justify-center gap-3 md:justify-start"
           >
-            Belgian Chocolate
-          </motion.p>
+            <span className="h-px w-8 bg-cocoa/40" />
+            <span dir="ltr" className="font-latin text-xs tracking-[0.45em] text-cocoa/70 uppercase">
+              Belgian Chocolate
+            </span>
+          </motion.div>
 
-          <h1 className="font-display mt-4 text-[3.4rem] leading-[1.15] text-olive sm:text-7xl md:text-[5.2rem]">
-            {['شوكولا بلجيكية،', 'بروح زمان'].map((line, i) => (
-              <motion.span
-                key={line}
-                className={`block ${i === 1 ? 'text-cocoa' : ''}`}
-                initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ delay: 0.3 + i * 0.25, duration: 1, ease }}
-              >
-                {line}
-              </motion.span>
-            ))}
+          <h1 className="font-display mt-5 text-[3.6rem] leading-[1.12] text-olive sm:text-7xl md:text-[5.6rem]">
+            <motion.span
+              className="block"
+              initial={{ opacity: 0, y: 40, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.3, duration: 1.1, ease }}
+            >
+              شوكولا بلجيكية،
+            </motion.span>
+            <motion.span
+              className="relative inline-block text-cocoa"
+              initial={{ opacity: 0, y: 40, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.55, duration: 1.1, ease }}
+            >
+              بروح زمان
+              {/* خط شوكولا بينرسم تحت الكلمة وبينقط */}
+              <svg aria-hidden viewBox="0 0 300 40" className="absolute -bottom-6 left-0 w-full overflow-visible" preserveAspectRatio="none">
+                <motion.path
+                  d="M296,14 C220,30 120,6 4,22"
+                  fill="none"
+                  stroke="var(--color-caramel)"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ delay: 1.3, duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
+                />
+                <motion.path
+                  d="M120,17 C119,26 117,30 120,34 C123,30 121,26 120,17 Z"
+                  fill="var(--color-caramel)"
+                  initial={{ scaleY: 0, opacity: 0 }}
+                  animate={{ scaleY: 1, opacity: 1 }}
+                  transition={{ delay: 2.2, duration: 0.8 }}
+                  style={{ originY: 0 }}
+                />
+              </svg>
+            </motion.span>
           </h1>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.8, ease }}
-            className="mx-auto mt-6 max-w-md text-lg leading-loose text-cocoa-deep/75 md:mx-0"
+            className="mx-auto mt-8 max-w-md text-lg leading-loose text-cocoa-deep/75 md:mx-0"
           >
-            صواني وهدايا بتنرتب باليد قطعة قطعة، وبتنكتب عليها أساميكم وتواريخكم الحلوة.
+            صواني وهدايا بتنرتب باليد بتلة بتلة، وبتنكتب عليها أساميكم وتواريخكم الحلوة.
           </motion.p>
 
           <motion.div
@@ -80,10 +134,12 @@ function Hero() {
           >
             <Link
               to="/shop"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-cocoa px-8 py-4 text-cream shadow-[0_12px_30px_-12px_rgb(107_62_51/0.8)] transition hover:bg-cocoa-deep sm:w-auto"
+              className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa px-8 py-4 text-cream shadow-[0_12px_30px_-12px_rgb(107_62_51/0.8)] sm:w-auto"
             >
-              اكتشف التشكيلة
-              <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" aria-hidden />
+              {/* شوكولا غامقة بتعبي الزر من تحت */}
+              <span className="absolute inset-0 translate-y-full rounded-[50%_50%_0_0] bg-cocoa-deep transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-0 group-hover:rounded-none" />
+              <span className="relative">اكتشف التشكيلة</span>
+              <ArrowLeft className="relative size-4 transition-transform group-hover:-translate-x-1" aria-hidden />
             </Link>
             {site && (
               <a
@@ -97,35 +153,60 @@ function Hero() {
               </a>
             )}
           </motion.div>
-        </div>
 
-        <div className="relative order-1 mx-auto w-full max-w-[19rem] sm:max-w-sm md:order-2 md:max-w-md">
-          {/* هالة دافية ورا النافورة */}
-          <div aria-hidden className="absolute inset-[12%] rounded-full bg-caramel/25 blur-3xl" />
-          <ChocolateFountain className="relative w-full drop-shadow-[0_30px_30px_rgb(62_36_29/0.18)]" />
-        </div>
-      </div>
-
-      {/* نقطة شوكولا بتنقط وبتوديك عالسكشن الجاي */}
-      <a
-        href="#categories"
-        aria-label="انزل للأقسام"
-        className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-cocoa/70"
-      >
-        <span className="font-latin text-[0.6rem] tracking-[0.3em] uppercase" dir="ltr">
-          Scroll
-        </span>
-        <span className="relative h-10 w-px bg-gradient-to-b from-cocoa/50 to-transparent">
-          <motion.svg
-            viewBox="0 0 12 16"
-            className="absolute -left-[5px] w-[11px] fill-cocoa"
-            animate={{ y: [0, 30], opacity: [0, 1, 0], scaleY: [0.7, 1.1, 0.8] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeIn', repeatDelay: 0.4 }}
+          <motion.ul
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4, duration: 1 }}
+            className="mt-10 flex items-center justify-center gap-4 text-sm text-cocoa/70 md:justify-start"
           >
-            <path d="M6 0C3 5 0 8 0 11a6 6 0 0 0 12 0c0-3-3-6-6-11z" />
-          </motion.svg>
-        </span>
-      </a>
+            {['بلجيكية ١٠٠٪', 'شغل إيد', 'بأساميكم'].map((t, i) => (
+              <li key={t} className="flex items-center gap-4">
+                {i > 0 && <span className="size-1 rounded-full bg-caramel" />}
+                {t}
+              </li>
+            ))}
+          </motion.ul>
+        </motion.div>
+
+        {/* شبّاك المحل: قوس عتيق والنافورة جوّاه */}
+        <motion.div style={{ y: archY }} className="relative order-1 mx-auto w-full max-w-[18.5rem] sm:max-w-sm md:order-2 md:max-w-[26rem]">
+          <motion.div
+            initial={{ clipPath: 'inset(100% 0 0 0 round 999px 999px 0 0)' }}
+            animate={{ clipPath: 'inset(0% 0 0 0 round 999px 999px 0 0)' }}
+            transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
+            className="relative aspect-[4/5] overflow-hidden rounded-t-full bg-olive-deep shadow-[0_40px_60px_-30px_rgb(51_60_39/0.8)]"
+          >
+            <BrandPattern className="text-sand/[0.06]" />
+            <div aria-hidden className="absolute inset-x-[10%] bottom-[8%] h-2/3 rounded-full bg-caramel/30 blur-3xl" />
+            <span aria-hidden className="absolute inset-3 rounded-t-full border border-sand/25" />
+            <span aria-hidden className="absolute inset-5 rounded-t-full border border-dashed border-sand/15" />
+            <ChocolateFountain className="absolute inset-x-[4%] bottom-[3%] w-[92%]" />
+          </motion.div>
+          {/* عتبة الشباك */}
+          <div aria-hidden className="relative -mx-4 h-4 rounded-sm bg-gradient-to-b from-sand to-sand-deep shadow-[0_10px_20px_-10px_rgb(62_36_29/0.6)]" />
+
+          <motion.div
+            initial={{ scale: 0, rotate: -90 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 1.6, type: 'spring', stiffness: 120, damping: 12 }}
+            className="absolute -bottom-10 -left-6 md:-left-12"
+          >
+            <RotatingSeal className="size-24 md:size-32" />
+          </motion.div>
+
+          {floating.map((f, i) => (
+            <motion.div key={i} aria-hidden style={{ y: parallax[i] }} className={`absolute ${f.cls}`}>
+              <motion.div
+                animate={{ y: [0, -10, 0], rotate: [0, 6, 0] }}
+                transition={{ duration: f.dur, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ChocolatePetal tone={f.tone} className="w-full drop-shadow-[0_8px_8px_rgb(62_36_29/0.3)]" />
+              </motion.div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
     </section>
   )
 }
@@ -136,29 +217,10 @@ function Categories() {
   const { data: categories } = useAsync(getCategories)
 
   return (
-    <section id="categories" className="relative scroll-mt-20 py-20 md:py-24">
+    <section id="categories" className="relative scroll-mt-20 overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Our Chocolate"
-          title="أقسامنا"
-          description="كل نوع إله طعمه وقصته. اختار اللي بيشبهك، أو اللي بيشبه اللي بدك تهديه."
-        />
-
-        {/* على الموبايل الكروت بتنسحب أفقيًا، وعلى الكمبيوتر كلها ظاهرة */}
-        <div className="-mx-4 overflow-x-auto px-4 pb-6 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-          <div className="relative mx-auto w-max">
-            {/* الحبل اللي معلقة عليه الكروت */}
-            <svg aria-hidden className="absolute -inset-x-6 top-0 h-6 w-[calc(100%+3rem)]" viewBox="0 0 100 6" preserveAspectRatio="none">
-              <path d="M0,1 Q50,6 100,1" stroke="var(--color-caramel)" strokeWidth="0.35" fill="none" vectorEffect="non-scaling-stroke" />
-            </svg>
-            <div className="flex min-h-56 gap-4 pt-1 sm:gap-8">
-              {categories?.map((category, i) => (
-                <CategoryTag key={category.id} category={category} index={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-        <p className="mt-2 text-center text-xs text-cocoa/50 sm:hidden">← اسحب لتشوف كل الأقسام →</p>
+        <SectionHeading eyebrow="Our Chocolate" title="زهرة الأقسام" description="متل صوانينا: كل بتلة نوع. اختار البتلة اللي بتشبهك." />
+        {categories ? <CategoryFlower categories={categories} /> : <div className="mx-auto aspect-square max-w-md animate-pulse rounded-full bg-sand/30" />}
       </div>
     </section>
   )
@@ -172,7 +234,7 @@ function FeaturedProducts() {
   return (
     <section className="relative bg-cream/60 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading eyebrow="Signature" title="من تشكيلتنا" description="قطع اختارتها الليدي إلك — كل وحدة بتنعمل على الطلب." />
+        <SectionHeading eyebrow="Signature" title="هدايا ملفوفة إلك" description="كل صينية بتوصلك ملفوفة بورق الليدي — وهون كمان. استنى لحظة وبتنفتح." />
 
         {loading ? (
           <div className="grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
@@ -181,7 +243,7 @@ function FeaturedProducts() {
             ))}
           </div>
         ) : (
-          <div className="mx-auto grid max-w-sm gap-x-8 gap-y-16 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto grid max-w-sm gap-x-10 gap-y-16 sm:max-w-none sm:grid-cols-2 lg:mx-auto lg:max-w-4xl">
             {products?.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
@@ -189,85 +251,11 @@ function FeaturedProducts() {
         )}
 
         <div className="mt-16 text-center">
-          <Link
-            to="/shop"
-            className="group inline-flex items-center gap-2 border-b border-cocoa/40 pb-1 text-cocoa transition hover:border-cocoa"
-          >
+          <Link to="/shop" className="group inline-flex items-center gap-2 border-b border-cocoa/40 pb-1 text-cocoa transition hover:border-cocoa">
             شوف كل التشكيلة
             <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" aria-hidden />
           </Link>
         </div>
-      </div>
-    </section>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-
-const promises = [
-  { icon: Sparkles, title: 'بلجيكية أصلية', text: 'شوكولا بلجيكية فاخرة بس، بدون بدائل.' },
-  { icon: PenLine, title: 'بأساميكم', text: 'الاسم والتاريخ والعبارة اللي بدك ياها.' },
-  { icon: Hand, title: 'شغل إيد', text: 'كل صينية بتترتب باليد قطعة قطعة.' },
-]
-
-function Story() {
-  return (
-    <section className="relative overflow-hidden bg-olive-deep py-20 text-sand md:py-28">
-      <BrandPattern className="text-sand/[0.06]" />
-
-      <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 md:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.94, rotate: -2 }}
-          whileInView={{ opacity: 1, scale: 1, rotate: -2 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 1, ease }}
-          className="relative mx-auto w-full max-w-[19rem] sm:max-w-sm"
-        >
-          <div className="rounded-t-[999px] rounded-b-lg border border-sand/30 p-3">
-            <img
-              src="/images/products/tray-white-names.jpg"
-              alt="صينية شوكولا مرتبة باليد"
-              loading="lazy"
-              className="aspect-[3/4] w-full rounded-t-[999px] rounded-b-md object-cover object-[center_60%]"
-            />
-          </div>
-          <span className="font-display absolute -bottom-5 -left-3 rotate-[-8deg] rounded-full bg-cocoa px-5 py-2 text-lg text-cream shadow-lg">
-            معمولة بحُب
-          </span>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.9, ease }}
-          className="text-center md:text-right"
-        >
-          <p dir="ltr" className="font-latin text-xs tracking-[0.4em] text-sand/60 uppercase md:text-right">
-            Our Story
-          </p>
-          <h2 className="font-display mt-3 text-4xl leading-snug text-cream sm:text-5xl">
-            حرفة قديمة،
-            <br />
-            بطعم بلجيكي
-          </h2>
-          <p className="mt-6 leading-loose text-sand/80">
-            بالليدي شوكولات، منآمن إنه الهدية الحلوة بتنحكى قبل ما تنأكل. منختار أجود الشوكولا البلجيكية، ومنرتبها باليد
-            على صواني بتذكرك بصواني الجدات بالأعياد — بس بلمسة اليوم.
-          </p>
-
-          <ul className="mt-10 grid gap-6 sm:grid-cols-3">
-            {promises.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex flex-col items-center gap-2 md:items-start">
-                <span className="grid size-11 place-items-center rounded-full border border-sand/30 text-caramel">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <span className="font-display text-xl text-cream">{title}</span>
-                <span className="text-sm leading-relaxed text-sand/70">{text}</span>
-              </li>
-            ))}
-          </ul>
-        </motion.div>
       </div>
     </section>
   )
@@ -282,63 +270,45 @@ const steps = [
 ]
 
 function HowToOrder() {
-  const site = useSite()
-
   return (
     <section id="how-to-order" className="scroll-mt-20 py-20 md:py-28">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <SectionHeading eyebrow="How to order" title="كيف تطلب؟" description="ثلاث خطوات وبس — بدون حسابات ولا تعقيد." />
 
         <ol className="relative grid gap-10 md:grid-cols-3 md:gap-6">
-          {/* خط منقّط بين الخطوات */}
-          <span aria-hidden className="absolute inset-x-[16%] top-9 hidden border-t-2 border-dashed border-sand-deep/60 md:block" />
+          {/* خط شوكولا بيوصل بين الخطوات */}
+          <svg aria-hidden viewBox="0 0 100 4" preserveAspectRatio="none" className="absolute inset-x-[16%] top-8 hidden h-4 w-[68%] md:block">
+            <motion.path
+              d="M100,2 C75,4 60,0 50,2 C40,4 25,0 0,2"
+              fill="none"
+              stroke="var(--color-caramel)"
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+              strokeDasharray="6 6"
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.6, ease: [0.65, 0, 0.35, 1] }}
+            />
+          </svg>
           {steps.map(({ icon: Icon, title, text }, i) => (
             <motion.li
               key={title}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
-              transition={{ delay: i * 0.15, duration: 0.7, ease }}
+              transition={{ delay: 0.3 + i * 0.35, duration: 0.7, ease }}
               className="relative flex flex-col items-center text-center"
             >
               <span className="relative grid size-[4.5rem] place-items-center rounded-full bg-parchment text-olive ring-1 ring-sand-deep">
                 <Icon className="size-6" aria-hidden />
-                <span className="absolute -top-1 -right-1 grid size-7 place-items-center rounded-full bg-cocoa text-sm text-cream">
-                  {i + 1}
-                </span>
+                <span className="absolute -top-1 -right-1 grid size-7 place-items-center rounded-full bg-cocoa text-sm text-cream">{i + 1}</span>
               </span>
               <h3 className="font-display mt-5 text-3xl text-olive">{title}</h3>
               <p className="mt-2 max-w-60 leading-relaxed text-cocoa-deep/70">{text}</p>
             </motion.li>
           ))}
         </ol>
-
-        {/* دعوة للطلب */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.8, ease }}
-          className="relative mt-20 overflow-hidden rounded-[2rem] bg-sand px-6 py-12 text-center sm:px-12"
-        >
-          <BrandPattern className="text-olive/[0.08]" />
-          <Gift className="relative mx-auto size-8 text-cocoa" aria-hidden />
-          <p className="font-display relative mt-3 text-3xl text-olive sm:text-4xl">عندك مناسبة قريبة؟</p>
-          <p className="relative mx-auto mt-3 max-w-md leading-loose text-cocoa-deep/75">
-            احكيلنا عنها، ومنصممّلك صينية على ذوقك.
-          </p>
-          {site && (
-            <a
-              href={whatsappLink(site.whatsapp, 'مرحبا، عندي مناسبة وحابب صينية شوكولا مخصّصة 🍫')}
-              target="_blank"
-              rel="noreferrer"
-              className="relative mt-7 inline-flex items-center gap-2 rounded-full bg-olive px-8 py-4 text-cream transition hover:bg-olive-deep"
-            >
-              <MessageCircle className="size-5" aria-hidden />
-              احكي معنا على واتساب
-            </a>
-          )}
-        </motion.div>
       </div>
     </section>
   )
