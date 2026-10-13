@@ -68,6 +68,12 @@ export interface SiteInfo {
   instagram: string
   address: string
   hours: string
+  /** ملاحظة بتطلع بصفحة الطلب عن التوصيل */
+  deliveryNote: string
+  /** مدن مقترحة لخانة المدينة (الزبون بيقدر يكتب غيرها) */
+  deliveryCities: string[]
+  /** كم يوم لازم الطلب يكون قبل الموعد */
+  minLeadDays: number
 }
 
 /** سطر بالطلبية (السلة) — بينبعت كله برسالة واتساب وحدة */
@@ -83,5 +89,22 @@ export interface OrderItem {
   qty: number
   /** نصوص التخصيص: [اسم الحقل، القيمة] */
   details: [string, string][]
-  eventDate?: string
+  /** ملاحظة الزبون على هالمنتج بالذات (ألوان، ترتيب، طلب خاص...) */
+  note?: string
+}
+
+/** معلومات الزبون والتوصيل — بتنحفظ بالجهاز عشان ما يعبيها كل مرة */
+export interface CheckoutInfo {
+  name: string
+  phone: string
+  method: 'delivery' | 'pickup'
+  city: string
+  address: string
+  /** رقم اللي بيستلم الطلبية إذا غير رقم الزبون */
+  receiverPhone: string
+  date: string
+  time: string
+  isGift: boolean
+  giftMessage: string
+  notes: string
 }

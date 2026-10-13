@@ -1,16 +1,15 @@
-import { CalendarHeart, ChevronDown, Image as ImageIcon, MessageCircle, Minus, PenLine, Plus, Share2, ShoppingBag, Check } from 'lucide-react'
+import { ChevronDown, Image as ImageIcon, MessageCircle, Minus, PenLine, Plus, Share2, ShoppingBag, Check } from 'lucide-react'
 import { AnimatePresence, motion, useInView } from 'motion/react'
 import { useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { AnimatedPrice } from '../components/AnimatedPrice'
 import { ComingSoon } from '../components/ComingSoon'
 import { ProductCard } from '../components/ProductCard'
 import { SizePicker } from '../components/SizePicker'
 import { TrayPreview } from '../components/TrayPreview'
 import { getCategories, getProductBySlug, getProducts } from '../lib/api'
-import { CURRENCY, formatPrice, whatsappLink } from '../lib/format'
-import { orderMessage, useOrder } from '../lib/order'
-import { useSite } from '../lib/site-context'
+import { formatPrice } from '../lib/format'
+import { useOrder } from '../lib/order'
 import { useAsync } from '../lib/useAsync'
 import type { Product } from '../types'
 
@@ -27,8 +26,8 @@ export function ProductPage() {
 /* ------------------------------------------------------------------ */
 
 function ProductView({ product }: { product: Product }) {
-  const site = useSite()
   const order = useOrder()
+  const navigate = useNavigate()
   const { data: categories } = useAsync(getCategories)
   const category = categories?.find((c) => c.id === product.categoryId)
 
@@ -36,7 +35,7 @@ function ProductView({ product }: { product: Product }) {
   const size = product.sizes.find((s) => s.id === sizeId) ?? product.sizes[0]
   const [qty, setQty] = useState(1)
   const [values, setValues] = useState<Record<string, string>>({})
-  const [eventDate, setEventDate] = useState('')
+  const [note, setNote] = useState('')
   const [view, setView] = useState<'photo' | 'preview'>('photo')
   const [added, setAdded] = useState(false)
   const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect } | null>(null)
@@ -55,7 +54,7 @@ function ProductView({ product }: { product: Product }) {
     unitPrice,
     qty,
     details,
-    eventDate: eventDate || undefined,
+    note: note.trim() || undefined,
   }
 
   // زر الإضافة الأساسي — لما يختفي عن الشاشة بنطلّع شريط ثابت تحت (موبايل)
@@ -69,8 +68,6 @@ function ProductView({ product }: { product: Product }) {
     setAdded(true)
     setTimeout(() => setAdded(false), 2600)
   }
-
-  const directMessage = orderMessage([{ ...item, key: 'direct' }], unitPrice * qty, CURRENCY)
 
   const share = async () => {
     const data = { title: product.name, text: product.shortDescription, url: window.location.href }
@@ -162,24 +159,41 @@ function ProductView({ product }: { product: Product }) {
                       />
                     </label>
                   ))}
-                  <label className="block">
-                    <span className="flex items-center gap-2 text-sm text-cocoa/70">
-                      <CalendarHeart className="size-4" aria-hidden />
-                      موعد المناسبة (اختياري)
-                    </span>
-                    <input
-                      type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                      className="mt-1 w-full border-b border-sand-deep/60 bg-transparent py-2 text-lg text-cocoa-deep focus:border-olive focus:outline-none"
-                    />
-                  </label>
                 </div>
               </Step>
             )}
 
-            {/* ٣ الكمية والطلب */}
-            <Step n={fields.length ? '٣' : '٢'} title="الكمية">
+            {/* ملاحظات على الصينية */}
+            <Step n={fields.length ? '٣' : '٢'} title="ملاحظاتك" hint="احكيلنا كيف بدك ياها بالزبط — إحنا بنقرأ كل كلمة">
+              <div className="relative">
+                <textarea
+                  value={note}
+                  maxLength={300}
+                  rows={3}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="مثلًا: بدي البتلات داكنة بس، والقطع الخارجية عليها اسم البيبي بدل اسمنا، وإذا بتقدروا ورد أبيض صغير..."
+                  className="w-full resize-none rounded-2xl border border-sand-deep/60 bg-cream/50 p-4 leading-relaxed text-cocoa-deep placeholder:text-cocoa/35 focus:border-olive focus:bg-parchment focus:outline-none"
+                />
+                <span dir="ltr" className="font-latin absolute bottom-3 left-4 text-xs text-cocoa/40">
+                  {note.length}/300
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {['بدون مكسرات', 'ألوان فاتحة', 'تغليف هدية', 'الاسم بالإنجليزي'].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setNote((n) => (n.includes(chip) ? n : `${n}${n.trim() ? '، ' : ''}${chip}`))}
+                    className="rounded-full border border-dashed border-sand-deep px-3 py-1.5 text-xs text-cocoa/70 transition hover:border-olive hover:text-olive"
+                  >
+                    + {chip}
+                  </button>
+                ))}
+              </div>
+            </Step>
+
+            {/* الكمية والطلب */}
+            <Step n={fields.length ? '٤' : '٣'} title="الكمية">
               <div ref={addRef} className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center rounded-full border border-sand-deep/70">
@@ -193,17 +207,17 @@ function ProductView({ product }: { product: Product }) {
                   </div>
                   <AddButton onClick={handleAdd} added={added} className="flex-1" />
                 </div>
-                {site && (
-                  <a
-                    href={whatsappLink(site.whatsapp, directMessage)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-olive/40 py-3.5 text-olive transition hover:border-olive hover:bg-olive/5"
-                  >
-                    <MessageCircle className="size-4" aria-hidden />
-                    أو اطلبها هلأ مباشرة على واتساب
-                  </a>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    order.add(item)
+                    navigate('/cart')
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-olive/40 py-3.5 text-olive transition hover:border-olive hover:bg-olive/5"
+                >
+                  <MessageCircle className="size-4" aria-hidden />
+                  اطلبها هلأ — كمّل معلومات التوصيل
+                </button>
                 <p className="text-center text-xs text-cocoa/50">بتنعمل على الطلب — السعر النهائي وموعد التسليم منأكدهم معك.</p>
               </div>
             </Step>

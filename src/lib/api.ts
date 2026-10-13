@@ -6,7 +6,7 @@
 import { categories } from '../data/categories'
 import { products } from '../data/products'
 import { site } from '../data/site'
-import type { Category, Product, SiteInfo } from '../types'
+import type { Category, CheckoutInfo, OrderItem, Product, SiteInfo } from '../types'
 
 /** تأخير بسيط عشان نحاكي الشبكة */
 const delay = (ms = 150) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -41,4 +41,16 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   await delay()
   return products.find((p) => p.slug === slug) ?? null
+}
+
+/**
+ * تسجيل طلبية. هلأ بس بيولّد رقم طلب (بينكتب برسالة الواتساب).
+ * مع Supabase: insert بجدول orders ورجّع الـ id الحقيقي.
+ */
+export async function submitOrder(order: { items: OrderItem[]; info: CheckoutInfo; total: number }): Promise<{ reference: string }> {
+  await delay()
+  void order
+  const stamp = Date.now().toString(36).slice(-4).toUpperCase()
+  const rand = Math.random().toString(36).slice(2, 4).toUpperCase()
+  return { reference: `LC-${stamp}${rand}` }
 }

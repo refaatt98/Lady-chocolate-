@@ -1,12 +1,59 @@
-# إعدادات Netlify: بناء الموقع، ومسارات React Router (أي رابط بيرجع لـ index.html)
+# ===== إعدادات Netlify =====
+# Netlify بيقرأ هالملف لحاله لما تربط الريبو من GitHub — ما في داعي تعبي إشي باللوحة.
+
 [build]
-  command = "npm run build"
+  command = "npm ci && npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
+  NPM_FLAGS = "--no-audit --no-fund"
 
+# --- تحويلات ---
+# الرابط القديم/المختصر للطلبية
+[[redirects]]
+  from = "/order"
+  to = "/cart"
+  status = 301
+
+[[redirects]]
+  from = "/products"
+  to = "/shop"
+  status = 301
+
+[[redirects]]
+  from = "/products/:slug"
+  to = "/product/:slug"
+  status = 301
+
+# React Router: أي مسار ما إله ملف بيرجع لـ index.html (لازم يكون آخر وحدة)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# --- هيدرز ---
+# ملفات assets إلها hash بالاسم، فمنخزّنها بالمتصفح سنة كاملة
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# index.html دايمًا يتحدّث عشان التعديلات توصل فورًا
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

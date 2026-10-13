@@ -1,16 +1,14 @@
-import { MessageCircle, Minus, Plus, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Trash2, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect } from 'react'
 import { Link } from 'react-router'
-import { CURRENCY, formatPrice, whatsappLink } from '../lib/format'
-import { orderMessage, useOrder } from '../lib/order'
-import { useSite } from '../lib/site-context'
+import { formatPrice } from '../lib/format'
+import { useOrder } from '../lib/order'
 import { ChocolatePetal } from './ChocolatePetal'
 
 /** درج "طلبيتي" — بيطلع من الطرف، وفيه كل اللي اخترته وزر واحد للواتساب */
 export function OrderDrawer() {
   const { items, total, open, setOpen, setQty, remove, clear } = useOrder()
-  const site = useSite()
 
   useEffect(() => {
     if (!open) return
@@ -107,7 +105,7 @@ export function OrderDrawer() {
                                 {k}: <span className="text-cocoa-deep">{v}</span>
                               </p>
                             ))}
-                          {item.eventDate && <p className="text-xs text-cocoa/60">موعد المناسبة: {item.eventDate}</p>}
+                          {item.note && <p className="line-clamp-2 text-xs text-cocoa/60">📝 {item.note}</p>}
                           <div className="mt-2 flex items-center justify-between">
                             <div className="flex items-center rounded-full border border-sand-deep/60">
                               <button type="button" onClick={() => setQty(item.key, item.qty + 1)} aria-label="زيادة" className="grid size-8 place-items-center text-olive">
@@ -131,18 +129,15 @@ export function OrderDrawer() {
                     <span className="text-cocoa/70">المجموع التقريبي</span>
                     <span className="font-display text-3xl text-cocoa">{formatPrice(total)}</span>
                   </div>
-                  <p className="text-xs text-cocoa/50">السعر النهائي والتوصيل منأكدهم معك على الواتساب.</p>
-                  {site && (
-                    <a
-                      href={whatsappLink(site.whatsapp, orderMessage(items, total, CURRENCY))}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-olive py-4 text-cream transition hover:bg-olive-deep"
-                    >
-                      <MessageCircle className="size-5" aria-hidden />
-                      ابعت الطلبية على واتساب
-                    </a>
-                  )}
+                  <p className="text-xs text-cocoa/50">بالخطوة الجاية بتكتب وين التوصيل وأي ملاحظات.</p>
+                  <Link
+                    to="/cart"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-olive py-4 text-cream transition hover:bg-olive-deep"
+                  >
+                    كمّل الطلب: التوصيل والملاحظات
+                    <ArrowLeft className="size-4" aria-hidden />
+                  </Link>
                   <button type="button" onClick={clear} className="w-full text-center text-xs text-cocoa/50 underline-offset-4 hover:underline">
                     فضّي الطلبية
                   </button>

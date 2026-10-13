@@ -1,0 +1,4 @@
+/order            /cart             301
+/products         /shop             301
+/products/:slug   /product/:slug    301
+/*                /index.html       200
