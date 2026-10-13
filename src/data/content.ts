@@ -30,6 +30,8 @@ export const defaultContent: SiteContent = {
     eyebrow: 'Our Story',
     title: 'من الحبة للصينية',
     image: '/images/products/tray-green-field.jpg',
+    beanColor: '#9c7262',
+    leafColor: '#626a46',
     chapters: [
       { title: 'من حبة كاكاو', text: 'كل إشي بيبدأ من حبة. منختار شوكولا بلجيكية أصلية، معمولة من أنقى حبوب الكاكاو.' },
       { title: 'بتذوب على مهل', text: 'منذوّبها على حرارة هادية ومضبوطة، عشان تطلع لامعة وناعمة وبتطقطق تحت السن.' },

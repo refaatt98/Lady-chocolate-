@@ -100,7 +100,7 @@ export interface SiteContent {
   ribbon: { words: string[] }
   categories: { eyebrow: string; title: string; description: string; hint: string }
   products: { eyebrow: string; title: string; description: string }
-  journey: { eyebrow: string; title: string; image: string; chapters: TitledText[] }
+  journey: { eyebrow: string; title: string; image: string; beanColor: string; leafColor: string; chapters: TitledText[] }
   nameSection: { eyebrow: string; title: string; description: string; occasions: string[]; buttonText: string; productSlug: string }
   howTo: { eyebrow: string; title: string; description: string; steps: TitledText[] }
 }

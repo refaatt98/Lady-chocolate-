@@ -10,8 +10,8 @@ import { PETAL_PATH, PETAL_RIDGES } from './ChocolatePetal'
  * النصوص والصورة الأخيرة من لوحة التحكم ← محتوى الموقع.
  */
 
-const arts: ((active: boolean, image: string) => ReactNode)[] = [
-  (active) => <CocoaPod active={active} />,
+const arts: ((active: boolean, image: string, colors: { bean: string; leaf: string }) => ReactNode)[] = [
+  (active, _image, colors) => <CocoaPod active={active} bean={colors.bean} leaf={colors.leaf} />,
   (active) => <MeltingBar active={active} />,
   (active) => <PetalBloom active={active} />,
   (active, image) => <TrayReveal active={active} image={image} />,
@@ -136,7 +136,7 @@ export function Journey({ content }: { content: SiteContent['journey'] }) {
             className="w-full shrink-0 snap-center snap-always select-none"
           >
             <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-4 sm:px-6 md:grid-cols-2 md:gap-16">
-              <div className="pointer-events-none mx-auto w-56 sm:w-72 md:order-2 md:w-96">{arts[i](seen >= i, content.image)}</div>
+              <div className="pointer-events-none mx-auto w-56 sm:w-72 md:order-2 md:w-96">{arts[i](seen >= i, content.image, { bean: content.beanColor, leaf: content.leafColor })}</div>
               <motion.div
                 className="text-center md:text-right"
                 animate={{ opacity: current === i ? 1 : 0.3, y: current === i ? 0 : 12 }}
@@ -177,20 +177,21 @@ const draw = (active: boolean, delay = 0) => ({
   transition: { duration: 1.4, delay, ease: [0.65, 0, 0.35, 1] as const },
 })
 
-function CocoaPod({ active }: { active: boolean }) {
+function CocoaPod({ active, bean, leaf }: { active: boolean; bean: string; leaf: string }) {
   return (
     <svg viewBox="0 0 300 300" className="w-full overflow-visible">
       <defs>
         <linearGradient id="pod" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--color-caramel)" />
-          <stop offset="1" stopColor="var(--color-cocoa)" />
+          {/* لون الحبة من لوحة التحكم: فاتح فوق وأغمق تحت */}
+          <stop offset="0" style={{ stopColor: `color-mix(in srgb, ${bean} 75%, white)` }} />
+          <stop offset="1" style={{ stopColor: `color-mix(in srgb, ${bean} 75%, black)` }} />
         </linearGradient>
       </defs>
       <circle cx="150" cy="160" r="128" fill="var(--color-cream)" />
       {/* ورق */}
       <motion.path
         d="M150,40 C110,10 60,20 40,50 C80,60 120,55 150,40 Z"
-        fill="var(--color-olive)"
+        fill={leaf}
         initial={{ scale: 0 }}
         animate={{ scale: active ? 1 : 0 }}
         transition={{ delay: 0.6, type: 'spring' }}
@@ -198,11 +199,11 @@ function CocoaPod({ active }: { active: boolean }) {
       />
       <motion.path
         d="M150,40 C185,8 240,15 262,42 C222,58 182,56 150,40 Z"
-        fill="var(--color-olive-soft)"
+        style={{ originX: 0, originY: 0.5, fill: `color-mix(in srgb, ${leaf} 70%, white)` }}
         initial={{ scale: 0 }}
         animate={{ scale: active ? 1 : 0 }}
         transition={{ delay: 0.75, type: 'spring' }}
-        style={{ originX: 0, originY: 0.5 }}
+        
       />
       {/* القرن */}
       <motion.path

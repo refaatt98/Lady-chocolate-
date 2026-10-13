@@ -1,7 +1,7 @@
 import { BookOpen, Flower2, Gift, ImagePlus, Loader2, PenLine, PenSquare, RotateCcw, Save, Sparkles, Waves, Workflow } from 'lucide-react'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Link } from 'react-router'
-import { Button, Card, Field, PageHeader, TagInput, TextArea, TextInput, errorText, useToast } from '../../components/admin/ui'
+import { Button, Card, ColorPicker, Field, PageHeader, TagInput, TextArea, TextInput, errorText, useToast } from '../../components/admin/ui'
 import { defaultContent } from '../../data/content'
 import { adminListProducts, adminSaveContent, adminUploadImage, getSiteInfo } from '../../lib/api'
 import { compressImage } from '../../lib/image'
@@ -181,6 +181,16 @@ export function AdminContent() {
                   </div>
                 </div>
               ))}
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-sm font-medium text-cocoa-deep/80">لون حبة الكاكاو (الفصل الأول)</p>
+                  <ColorPicker value={content.journey.beanColor} onChange={(beanColor) => set('journey', { beanColor })} />
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-medium text-cocoa-deep/80">لون الورق</p>
+                  <ColorPicker value={content.journey.leafColor} onChange={(leafColor) => set('journey', { leafColor })} />
+                </div>
+              </div>
               <ImageField label="صورة الفصل الأخير" value={content.journey.image} onChange={(image) => set('journey', { image })} products={products} />
             </div>
           )}
