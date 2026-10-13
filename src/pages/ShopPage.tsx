@@ -104,7 +104,7 @@ export function ShopPage() {
       {/* المنتجات */}
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 md:py-20">
         {loading ? (
-          <div className="grid gap-x-10 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:gap-x-10">
             {[0, 1, 2].map((i) => (
               <div key={i} className="aspect-[4/5] animate-pulse rounded-t-[999px] rounded-b-2xl bg-sand/40" />
             ))}
@@ -112,7 +112,7 @@ export function ShopPage() {
         ) : sorted.length ? (
           <>
             <p className="mb-10 text-sm text-cocoa/60">{sorted.length} {sorted.length === 1 ? 'منتج' : 'منتجات'}</p>
-            <div className="mx-auto grid max-w-sm gap-x-10 gap-y-16 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:gap-x-10">
               {sorted.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}

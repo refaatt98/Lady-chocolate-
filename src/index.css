@@ -73,14 +73,15 @@
     pointer-events: none;
   }
 
-  /* إطار عتيق مزدوج */
-  .vintage-frame {
-    @apply relative;
-    box-shadow:
-      0 0 0 1px var(--color-sand-deep),
-      0 0 0 6px var(--color-parchment),
-      0 0 0 7px var(--color-sand-deep);
-  }
+}
+
+/* إطار عتيق مزدوج — utility عشان يشتغل مع sm: و md: */
+@utility vintage-frame {
+  position: relative;
+  box-shadow:
+    0 0 0 1px var(--color-sand-deep),
+    0 0 0 6px var(--color-parchment),
+    0 0 0 7px var(--color-sand-deep);
 }
 
 /* ===== أنيميشن نافورة الشوكولا ===== */

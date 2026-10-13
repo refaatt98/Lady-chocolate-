@@ -237,13 +237,13 @@ function FeaturedProducts() {
         <SectionHeading eyebrow="Signature" title="هدايا ملفوفة إلك" description="كل صينية بتوصلك ملفوفة بورق الليدي — وهون كمان. استنى لحظة وبتنفتح." />
 
         {loading ? (
-          <div className="grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:gap-x-10">
             {[0, 1, 2].map((i) => (
               <div key={i} className="aspect-[4/5] animate-pulse rounded-t-[999px] rounded-b-2xl bg-sand/40" />
             ))}
           </div>
         ) : (
-          <div className="mx-auto grid max-w-sm gap-x-10 gap-y-16 sm:max-w-none sm:grid-cols-2 lg:mx-auto lg:max-w-4xl">
+          <div className="grid grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:gap-x-10">
             {products?.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}

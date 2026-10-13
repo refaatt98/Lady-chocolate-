@@ -538,7 +538,7 @@ function Related({ product }: { product: Product }) {
     <section className="bg-cream/60 py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <h2 className="font-display mb-12 text-center text-4xl text-olive">ممكن يعجبك كمان</h2>
-        <div className="mx-auto grid max-w-sm gap-x-10 gap-y-16 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:gap-x-10">
           {related.map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} />
           ))}

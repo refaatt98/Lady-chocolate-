@@ -52,8 +52,8 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
       <Link to={`/product/${product.slug}`} className="block focus-visible:outline-none">
         <motion.div ref={ref} onPointerMove={onMove} onPointerLeave={onLeave} style={{ rotateX, rotateY }} className="relative">
           {/* القوس */}
-          <div className="vintage-frame overflow-hidden rounded-t-[999px] rounded-b-2xl bg-cream">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-2xl">
+          <div className="overflow-hidden rounded-t-[999px] rounded-b-xl bg-cream ring-1 ring-sand-deep sm:vintage-frame sm:rounded-b-2xl sm:ring-0">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-xl sm:rounded-b-2xl">
               <motion.img
                 src={product.images[0]}
                 alt={product.name}
@@ -90,7 +90,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
               >
                 <span className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 bg-[repeating-linear-gradient(0deg,var(--color-caramel)_0_5px,var(--color-sand-deep)_5px_7px)]" />
                 <span className="absolute inset-x-0 top-[42%] h-[3px] bg-[repeating-linear-gradient(90deg,var(--color-caramel)_0_5px,var(--color-sand-deep)_5px_7px)]" />
-                <svg viewBox="0 0 80 50" className="absolute top-[42%] left-1/2 w-28 -translate-x-1/2 -translate-y-1/2 drop-shadow-md">
+                <svg viewBox="0 0 80 50" className="absolute top-[42%] left-1/2 w-12 -translate-x-1/2 sm:w-28 -translate-y-1/2 drop-shadow-md">
                   <path d="M40,25 C25,5 5,8 8,22 C10,34 28,30 40,25 Z" fill="var(--color-caramel)" stroke="var(--color-cocoa)" strokeWidth="1" />
                   <path d="M40,25 C55,5 75,8 72,22 C70,34 52,30 40,25 Z" fill="var(--color-caramel)" stroke="var(--color-cocoa)" strokeWidth="1" />
                   <path d="M38,26 L30,46 M42,26 L50,46" stroke="var(--color-caramel)" strokeWidth="3" strokeLinecap="round" />
@@ -98,30 +98,30 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                 </svg>
               </motion.div>
             </div>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 rounded-b-2xl bg-gradient-to-t from-cocoa-deep/35 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 rounded-b-xl bg-gradient-to-t sm:rounded-b-2xl from-cocoa-deep/35 to-transparent" />
           </div>
 
           {product.badge && (
-            <span className="absolute top-[18%] right-0 translate-x-2 bg-olive px-3 py-1 text-xs text-cream shadow-md before:absolute before:top-full before:right-0 before:border-t-[6px] before:border-r-[8px] before:border-t-olive-deep before:border-r-transparent before:content-['']">
+            <span className="absolute top-[18%] right-0 translate-x-1 bg-olive px-1.5 py-0.5 text-[0.55rem] text-cream sm:translate-x-2 sm:px-3 sm:py-1 sm:text-xs shadow-md before:absolute before:top-full before:right-0 before:border-t-[6px] before:border-r-[8px] before:border-t-olive-deep before:border-r-transparent before:content-['']">
               {product.badge}
             </span>
           )}
 
           {/* كرت السعر المعلق */}
-          <div className="absolute -bottom-7 left-5 flex origin-top flex-col items-center transition-transform duration-700 ease-[var(--ease-soft)] group-hover:-rotate-12">
-            <span aria-hidden className="h-6 w-px bg-caramel" />
-            <span className="relative grid size-[4.75rem] place-items-center rounded-full bg-parchment text-center shadow-[0_8px_20px_-8px_rgb(92_59_47/0.25)] ring-1 ring-sand-deep">
-              <span aria-hidden className="absolute top-1.5 size-2 rounded-full border border-sand-deep" />
-              <span className="mt-1.5 text-[0.65rem] leading-none text-cocoa/70">من</span>
-              <span className="text-sm leading-none font-semibold text-cocoa">{formatPrice(product.price)}</span>
+          <div className="absolute -bottom-5 left-1 flex origin-top sm:-bottom-7 sm:left-5 flex-col items-center transition-transform duration-700 ease-[var(--ease-soft)] group-hover:-rotate-12">
+            <span aria-hidden className="h-3 w-px bg-caramel sm:h-6" />
+            <span className="relative grid size-12 place-items-center rounded-full sm:size-[4.75rem] bg-parchment text-center shadow-[0_8px_20px_-8px_rgb(92_59_47/0.25)] ring-1 ring-sand-deep">
+              <span aria-hidden className="absolute top-1 size-1.5 rounded-full border border-sand-deep sm:top-1.5 sm:size-2" />
+              <span className="mt-1 text-[0.5rem] leading-none text-cocoa/70 sm:mt-1.5 sm:text-[0.65rem]">من</span>
+              <span className="text-[0.62rem] leading-none font-semibold whitespace-nowrap text-cocoa sm:text-sm">{formatPrice(product.price)}</span>
             </span>
           </div>
         </motion.div>
 
-        <div className="mt-10 px-1">
-          <h3 className="font-display text-2xl text-olive transition-colors group-hover:text-cocoa sm:text-[1.7rem]">{product.name}</h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-cocoa-deep/70">{product.shortDescription}</p>
-          <span className="mt-4 inline-flex items-center gap-2 text-sm text-cocoa">
+        <div className="mt-7 px-0.5 sm:mt-10 sm:px-1">
+          <h3 className="font-display text-[0.95rem] leading-snug text-olive transition-colors group-hover:text-cocoa sm:text-2xl lg:text-[1.7rem]">{product.name}</h3>
+          <p className="mt-2 line-clamp-2 hidden text-sm leading-relaxed text-cocoa-deep/70 sm:block">{product.shortDescription}</p>
+          <span className="mt-4 hidden items-center gap-2 text-sm text-cocoa sm:inline-flex">
             شوف التفاصيل
             <ArrowLeft className="size-4 transition-transform duration-300 group-hover:-translate-x-1.5" aria-hidden />
           </span>
