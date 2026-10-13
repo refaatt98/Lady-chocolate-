@@ -12,6 +12,7 @@ import { formatPrice } from '../lib/format'
 import { useOrder } from '../lib/order'
 import { useAsync } from '../lib/useAsync'
 import type { Product } from '../types'
+import { DEFAULT_STORAGE_NOTE } from '../data/content'
 
 export function ProductPage() {
   const { slug = '' } = useParams()
@@ -41,7 +42,8 @@ function ProductView({ product }: { product: Product }) {
   const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect } | null>(null)
 
   const unitPrice = size?.price ?? product.price
-  const fields = product.customization ?? []
+  // خطوة التخصيص بتنخفى إذا الأدمن طفاها (الخانات بتضل محفوظة)
+  const fields = product.customizationEnabled === false ? [] : (product.customization ?? [])
   const details: [string, string][] = fields.map((f) => [f.label, values[f.id] ?? ''])
 
   const item = {
@@ -235,11 +237,11 @@ function ProductView({ product }: { product: Product }) {
                 ))}
               </ul>
             </Accordion>
-            <Accordion title="الحفظ والتقديم">
-              <p className="leading-loose text-cocoa-deep/75">
-                احفظها بمكان بارد وناشف، بعيد عن الشمس والريحة القوية. الأفضل ما تنحط بالثلاجة، ولو اضطريت، طلّعها قبل التقديم بشوي.
-              </p>
-            </Accordion>
+            {product.storageNote?.trim() !== '' && (
+              <Accordion title="الحفظ والتقديم">
+                <p className="leading-loose whitespace-pre-line text-cocoa-deep/75">{product.storageNote ?? DEFAULT_STORAGE_NOTE}</p>
+              </Accordion>
+            )}
           </div>
         </div>
       </section>
@@ -326,7 +328,8 @@ function Gallery({
   values: Record<string, string>
 }) {
   const [index, setIndex] = useState(0)
-  const preview = product.preview
+  // المعاينة بس إذا خطوة التخصيص ظاهرة
+  const preview = product.customizationEnabled === false ? undefined : product.preview
   const fieldLabel = (id?: string) => product.customization?.find((f) => f.id === id)
 
   return (

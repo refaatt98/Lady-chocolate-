@@ -23,7 +23,7 @@ const toneFill: Record<Category['tone'], { fill: string; ink: string }> = {
   olive: { fill: 'var(--color-olive)', ink: 'var(--color-cream)' },
 }
 
-export function CategoryFlower({ categories }: { categories: Category[] }) {
+export function CategoryFlower({ categories, hint }: { categories: Category[]; hint?: string }) {
   const [active, setActive] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, amount: 0.35 })
@@ -62,7 +62,7 @@ export function CategoryFlower({ categories }: { categories: Category[] }) {
             </motion.div>
           )}
         </AnimatePresence>
-        <p className="mt-8 text-sm text-cocoa/50">مرّق على البتلات أو اكبسها لتكتشف كل نوع</p>
+        {hint && <p className="mt-8 text-sm text-cocoa/50">{hint}</p>}
       </div>
 
       {/* الزهرة */}
@@ -103,7 +103,7 @@ export function CategoryFlower({ categories }: { categories: Category[] }) {
               const catIndex = i / PER
               const cat = isCategory ? categories[catIndex] : undefined
               const isActive = isCategory && catIndex === active
-              const tone = cat ? toneFill[cat.tone] : null
+              const tone = cat ? (cat.color ? { fill: cat.color, ink: '' } : toneFill[cat.tone]) : null
               // البتلة مرسومة بـ viewBox 40x96 ورأسها لفوق؛ منكبرها ومنحط قاعدتها على حافة القرص
               const scale = isCategory ? 1.5 : 1.1
               const lift = isActive ? 14 : 0

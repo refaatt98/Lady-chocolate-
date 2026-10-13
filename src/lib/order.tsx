@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { CheckoutInfo, OrderItem } from '../types'
+import type { AppliedPromo, CheckoutInfo, OrderItem } from '../types'
 
 /**
  * "طلبيتي": سلة بسيطة محفوظة بالمتصفح، مع معلومات الزبون والتوصيل.
@@ -9,6 +9,7 @@ import type { CheckoutInfo, OrderItem } from '../types'
 
 const ITEMS_KEY = 'lady-order'
 const INFO_KEY = 'lady-checkout'
+const PROMO_KEY = 'lady-promo'
 
 export const emptyCheckout: CheckoutInfo = {
   name: '',
@@ -64,6 +65,9 @@ interface OrderContextValue {
   clear: () => void
   info: CheckoutInfo
   setInfo: (patch: Partial<CheckoutInfo>) => void
+  /** كود الخصم المطبّق (الخصم محسوب على المجموع وقت التطبيق) */
+  promo: AppliedPromo | null
+  setPromo: (promo: AppliedPromo | null) => void
 }
 
 const OrderContext = createContext<OrderContextValue | null>(null)
@@ -72,9 +76,18 @@ export function OrderProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<OrderItem[]>(readItems)
   const [info, setInfoState] = useState<CheckoutInfo>(() => read(INFO_KEY, emptyCheckout))
   const [open, setOpen] = useState(false)
+  const [promo, setPromo] = useState<AppliedPromo | null>(() => {
+    try {
+      const raw = localStorage.getItem(PROMO_KEY)
+      return raw ? (JSON.parse(raw) as AppliedPromo) : null
+    } catch {
+      return null
+    }
+  })
 
   useEffect(() => write(ITEMS_KEY, items), [items])
   useEffect(() => write(INFO_KEY, info), [info])
+  useEffect(() => write(PROMO_KEY, promo), [promo])
 
   const add = useCallback((item: Omit<OrderItem, 'key'>) => {
     // نفس المنتج بنفس الحجم والتخصيص والملاحظة = منزيد الكمية بدل سطر جديد
@@ -95,7 +108,10 @@ export function OrderProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const remove = useCallback((key: string) => setItems((prev) => prev.filter((i) => i.key !== key)), [])
-  const clear = useCallback(() => setItems([]), [])
+  const clear = useCallback(() => {
+    setItems([])
+    setPromo(null)
+  }, [])
   const setInfo = useCallback((patch: Partial<CheckoutInfo>) => setInfoState((prev) => ({ ...prev, ...patch })), [])
 
   const value = useMemo(
@@ -112,8 +128,10 @@ export function OrderProvider({ children }: { children: ReactNode }) {
       clear,
       info,
       setInfo,
+      promo,
+      setPromo,
     }),
-    [items, open, add, setQty, setNote, remove, clear, info, setInfo],
+    [items, open, add, setQty, setNote, remove, clear, info, setInfo, promo],
   )
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
@@ -154,7 +172,18 @@ const timeLabels: Record<string, string> = {
 export const timeSlots = Object.entries(timeLabels).map(([id, label]) => ({ id, label }))
 
 /** نص رسالة الواتساب: المنتجات + ملاحظاتها + معلومات التوصيل */
-export function orderMessage(items: OrderItem[], total: number, currency: string, info?: CheckoutInfo, reference?: string) {
+/**
+ * deliveryFee: رقم = سعر التوصيل، null = بيتأكد على الواتساب، undefined = ما في توصيل/مش معروف لسا
+ */
+export function orderMessage(
+  items: OrderItem[],
+  total: number,
+  currency: string,
+  info?: CheckoutInfo,
+  reference?: string,
+  promo?: AppliedPromo | null,
+  deliveryFee?: number | null,
+) {
   const lines: string[] = ['مرحبا الليدي شوكولات 🍫', reference ? `طلب رقم: ${reference}` : '', 'حابب أطلب:', ''].filter((l, i) => l || i > 1)
 
   items.forEach((item, i) => {
@@ -163,7 +192,19 @@ export function orderMessage(items: OrderItem[], total: number, currency: string
     if (item.note?.trim()) lines.push(`   📝 ملاحظة: ${item.note.trim()}`)
   })
 
-  lines.push('', `💰 المجموع التقريبي: ${total} ${currency}`)
+  const discount = promo && promo.discount > 0 ? promo.discount : 0
+  const fee = info?.method === 'delivery' && typeof deliveryFee === 'number' ? deliveryFee : 0
+  const extras = discount > 0 || fee > 0 || (info?.method === 'delivery' && deliveryFee !== undefined)
+  if (extras) {
+    lines.push('', `المنتجات: ${total} ${currency}`)
+    if (discount > 0) lines.push(`🏷️ كود خصم ${promo!.code}: −${discount} ${currency}`)
+    if (info?.method === 'delivery' && deliveryFee !== undefined) {
+      lines.push(deliveryFee === null ? '🚚 التوصيل: بنتفق عليه' : `🚚 التوصيل: ${deliveryFee === 0 ? 'مجاني' : `${deliveryFee} ${currency}`}`)
+    }
+    lines.push(`💰 المجموع: ${Math.max(0, total - discount) + fee} ${currency}`)
+  } else {
+    lines.push('', `💰 المجموع التقريبي: ${total} ${currency}`)
+  }
 
   if (info) {
     lines.push('', '— معلومات الطلب —', `👤 الاسم: ${info.name}`, `📞 الرقم: ${info.phone}`)

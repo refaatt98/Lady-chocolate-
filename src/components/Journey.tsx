@@ -1,94 +1,170 @@
-import { motion, useMotionValueEvent, useScroll, useTransform } from 'motion/react'
-import { useRef, useState, type ReactNode } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion } from 'motion/react'
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import type { SiteContent } from '../types'
 import { PETAL_PATH, PETAL_RIDGES } from './ChocolatePetal'
 
 /**
- * الحكاية: "من الحبة للصينية" — سكشن بيثبت بالشاشة، والسكرول لتحت بيحرّك الفصول بالعرض.
- * كل فصل إله رسمة بتتحرك لما يوصلها الدور.
+ * الحكاية: "من الحبة للصينية" — شريط فصول بيتسحب يمين ويسار
+ * (سحب بالإصبع على الموبايل، وأسهم/سحب بالماوس/أزرار الأسهم على الكمبيوتر).
+ * النصوص والصورة الأخيرة من لوحة التحكم ← محتوى الموقع.
  */
 
-interface Chapter {
-  title: string
-  text: string
-  art: (active: boolean) => ReactNode
-}
-
-const chapters: Chapter[] = [
-  {
-    title: 'من حبة كاكاو',
-    text: 'كل إشي بيبدأ من حبة. منختار شوكولا بلجيكية أصلية، معمولة من أنقى حبوب الكاكاو.',
-    art: (active) => <CocoaPod active={active} />,
-  },
-  {
-    title: 'بتذوب على مهل',
-    text: 'منذوّبها على حرارة هادية ومضبوطة، عشان تطلع لامعة وناعمة وبتطقطق تحت السن.',
-    art: (active) => <MeltingBar active={active} />,
-  },
-  {
-    title: 'بتترتب باليد',
-    text: 'بتلة ورا بتلة، بتنصفّ الشوكولا باليد على شكل زهرة. ولا صينية بتشبه الثانية.',
-    art: (active) => <PetalBloom active={active} />,
-  },
-  {
-    title: 'وبتوصلك بأساميكم',
-    text: 'وبالآخر بنكتب أساميكم وتاريخ فرحتكم، وبتطلع هدية بتضل بالذاكرة.',
-    art: (active) => <TrayReveal active={active} />,
-  },
+const arts: ((active: boolean, image: string) => ReactNode)[] = [
+  (active) => <CocoaPod active={active} />,
+  (active) => <MeltingBar active={active} />,
+  (active) => <PetalBloom active={active} />,
+  (active, image) => <TrayReveal active={active} image={image} />,
 ]
+const arabicDigits = ['١', '٢', '٣', '٤', '٥', '٦']
 
-export function Journey() {
-  const ref = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
+export function Journey({ content }: { content: SiteContent['journey'] }) {
+  const chapters = content.chapters.slice(0, arts.length)
   const n = chapters.length
-  // بالعربي الفصول من اليمين لليسار، فمنحرّك الشريط لليمين
-  const x = useTransform(scrollYProgress, [0.05, 0.95], ['0vw', `${(n - 1) * 100}vw`])
+  const trackRef = useRef<HTMLDivElement>(null)
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([])
   const [current, setCurrent] = useState(0)
+  const [seen, setSeen] = useState(0)
+  const drag = useRef<{ x: number; id: number } | null>(null)
 
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    setCurrent(Math.min(n - 1, Math.max(0, Math.round(((v - 0.05) / 0.9) * (n - 1)))))
-  })
+  // الفصل الظاهر = اللي أكثر من نصّه بالشاشة (بيشتغل مع RTL ومع أي طريقة سحب)
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const i = slideRefs.current.indexOf(e.target as HTMLDivElement)
+            if (i >= 0) {
+              setCurrent(i)
+              setSeen((s) => Math.max(s, i))
+            }
+          }
+        }
+      },
+      { root: track, threshold: 0.6 },
+    )
+    slideRefs.current.forEach((el) => el && io.observe(el))
+    return () => io.disconnect()
+  }, [n])
+
+  const goTo = (i: number) => {
+    const target = Math.max(0, Math.min(n - 1, i))
+    const track = trackRef.current
+    const slide = slideRefs.current[target]
+    if (!track || !slide) return
+    track.scrollTo({ left: slide.offsetLeft - track.offsetLeft, behavior: 'smooth' })
+  }
+
+  // سحب بالماوس (الإصبع بيستعمل السحب الطبيعي للمتصفح)
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType === 'mouse') drag.current = { x: e.clientX, id: e.pointerId }
+  }
+  const onPointerUp = (e: PointerEvent) => {
+    if (!drag.current || drag.current.id !== e.pointerId) return
+    const dx = e.clientX - drag.current.x
+    drag.current = null
+    // بالعربي: السحب لليمين = الفصل الجاي
+    if (Math.abs(dx) > 50) goTo(current + (dx > 0 ? 1 : -1))
+  }
 
   return (
-    <section ref={ref} aria-label="حكاية الشوكولا" className="relative" style={{ height: `${n * 100}vh` }}>
-      <div className="sticky top-0 flex h-dvh flex-col overflow-hidden">
-        <div className="mx-auto w-full max-w-6xl px-4 pt-24 sm:px-6 md:pt-28">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p dir="ltr" className="font-latin text-right text-xs tracking-[0.4em] text-cocoa/60 uppercase">
-                Our Story
-              </p>
-              <h2 className="font-display mt-2 text-3xl text-olive sm:text-5xl">من الحبة للصينية</h2>
-            </div>
-            <p dir="ltr" className="font-latin text-3xl text-cocoa/70 tabular-nums sm:text-5xl">
+    <section aria-label="حكاية الشوكولا" aria-roledescription="carousel" className="relative py-20 md:py-28">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p dir="ltr" className="font-latin text-right text-xs tracking-[0.4em] text-cocoa/60 uppercase">
+              {content.eyebrow}
+            </p>
+            <h2 className="font-display mt-2 text-3xl text-olive sm:text-5xl">{content.title}</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <p dir="ltr" className="font-latin hidden text-3xl text-cocoa/70 tabular-nums sm:block sm:text-5xl">
               <span className="text-cocoa">{String(current + 1).padStart(2, '0')}</span>
               <span className="text-cocoa/30"> / {String(n).padStart(2, '0')}</span>
             </p>
-          </div>
-          {/* شريط التقدم مع نقطة شوكولا */}
-          <div className="relative mt-5 h-px bg-sand-deep/50">
-            <motion.div className="absolute inset-y-0 right-0 left-0 origin-right bg-cocoa" style={{ scaleX: scrollYProgress }} />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                aria-label="الفصل السابق"
+                onClick={() => goTo(current - 1)}
+                disabled={current === 0}
+                className="grid size-11 place-items-center rounded-full border border-sand-deep/70 text-olive transition hover:bg-olive hover:text-parchment disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-olive"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="الفصل الجاي"
+                onClick={() => goTo(current + 1)}
+                disabled={current === n - 1}
+                className="grid size-11 place-items-center rounded-full border border-sand-deep/70 text-olive transition hover:bg-olive hover:text-parchment disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-olive"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+            </div>
           </div>
         </div>
-
-        <motion.div style={{ x }} className="flex flex-1">
-          {chapters.map((c, i) => (
-            <div key={c.title} className="flex w-screen shrink-0 items-center">
-              <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-4 sm:px-6 md:grid-cols-2 md:gap-16">
-                <div className="mx-auto w-56 sm:w-72 md:order-2 md:w-96">{c.art(current >= i)}</div>
-                <motion.div
-                  className="text-center md:text-right"
-                  animate={{ opacity: current === i ? 1 : 0.25, y: current === i ? 0 : 16 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <span className="font-display text-7xl leading-none text-sand-deep/60 md:text-9xl">{['١', '٢', '٣', '٤'][i]}</span>
-                  <h3 className="font-display mt-2 text-4xl text-olive md:text-6xl">{c.title}</h3>
-                  <p className="mx-auto mt-4 max-w-md text-lg leading-loose text-cocoa-deep/75 md:mx-0">{c.text}</p>
-                </motion.div>
-              </div>
-            </div>
-          ))}
-        </motion.div>
+        {/* شريط التقدم */}
+        <div className="relative mt-5 h-px bg-sand-deep/50">
+          <motion.div className="absolute inset-y-0 right-0 bg-cocoa" animate={{ width: `${((current + 1) / n) * 100}%` }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} />
+        </div>
       </div>
+
+      <div
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => (drag.current = null)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') goTo(current + 1)
+          if (e.key === 'ArrowRight') goTo(current - 1)
+        }}
+        tabIndex={0}
+        className="mt-8 flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] focus:outline-none md:cursor-grab md:active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+      >
+        {chapters.map((c, i) => (
+          <div
+            key={i}
+            ref={(el) => {
+              slideRefs.current[i] = el
+            }}
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} من ${n}`}
+            className="w-full shrink-0 snap-center snap-always select-none"
+          >
+            <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-4 sm:px-6 md:grid-cols-2 md:gap-16">
+              <div className="pointer-events-none mx-auto w-56 sm:w-72 md:order-2 md:w-96">{arts[i](seen >= i, content.image)}</div>
+              <motion.div
+                className="text-center md:text-right"
+                animate={{ opacity: current === i ? 1 : 0.3, y: current === i ? 0 : 12 }}
+                transition={{ duration: 0.5 }}
+              >
+                <span className="font-display text-7xl leading-none text-sand-deep/60 md:text-9xl">{arabicDigits[i]}</span>
+                <h3 className="font-display mt-2 text-4xl text-olive md:text-6xl">{c.title}</h3>
+                <p className="mx-auto mt-4 max-w-md text-lg leading-loose text-cocoa-deep/75 md:mx-0">{c.text}</p>
+              </motion.div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* نقاط الفصول */}
+      <div className="mt-8 flex items-center justify-center gap-2">
+        {chapters.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`الفصل ${i + 1}`}
+            aria-current={current === i}
+            onClick={() => goTo(i)}
+            className={`h-2 rounded-full transition-all duration-300 ${current === i ? 'w-8 bg-cocoa' : 'w-2 bg-sand-deep/60 hover:bg-sand-deep'}`}
+          />
+        ))}
+      </div>
+      <p className="mt-3 text-center text-xs text-cocoa/45 md:hidden">→ اسحب يمين ويسار ←</p>
     </section>
   )
 }
@@ -284,7 +360,7 @@ function PetalBloom({ active }: { active: boolean }) {
   )
 }
 
-function TrayReveal({ active }: { active: boolean }) {
+function TrayReveal({ active, image }: { active: boolean; image: string }) {
   return (
     <motion.div
       className="relative mx-auto w-full"
@@ -294,9 +370,10 @@ function TrayReveal({ active }: { active: boolean }) {
     >
       <div className="vintage-frame overflow-hidden rounded-t-[999px] rounded-b-3xl">
         <img
-          src="/images/products/tray-green-field.jpg"
+          src={image}
           alt="صينية جاهزة بالاسم"
           loading="lazy"
+          draggable={false}
           className="aspect-[4/5] w-full object-cover object-[center_62%]"
         />
       </div>

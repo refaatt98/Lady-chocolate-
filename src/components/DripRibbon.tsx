@@ -1,8 +1,6 @@
 import { motion, useScroll, useTransform } from 'motion/react'
 import { useRef } from 'react'
 
-const words = ['عرس', 'خطوبة', 'مولود جديد', 'نجاح', 'عيد', 'تخرّج', 'شكرًا', 'رمضان', 'هدية حب']
-
 /** حافة شوكولا ذايبة: نقاط بأطوال مختلفة (ثابتة عشان الشكل ما يتغير) */
 const drips = [
   [60, 22, 58], [170, 30, 82], [260, 16, 44], [360, 26, 70], [480, 34, 96], [590, 18, 50],
@@ -19,7 +17,7 @@ const dripPath = (() => {
 })()
 
 /** شريط شوكولا بيمشي بكلمات المناسبات، وتحته شوكولا بتنقط وبتطول مع السكرول */
-export function DripRibbon() {
+export function DripRibbon({ words }: { words: string[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const stretch = useTransform(scrollYProgress, [0, 1], [0.5, 1.7])
@@ -30,8 +28,8 @@ export function DripRibbon() {
         <div dir="ltr" className="flex w-max animate-[marquee_38s_linear_infinite] motion-reduce:animate-none">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex shrink-0 items-center">
-              {words.map((w) => (
-                <span key={w} className="flex items-center">
+              {words.map((w, i) => (
+                <span key={`${w}-${i}`} className="flex items-center">
                   <span className="font-display px-6 text-2xl whitespace-nowrap md:text-3xl">{w}</span>
                   <span className="text-cream/80">✦</span>
                 </span>

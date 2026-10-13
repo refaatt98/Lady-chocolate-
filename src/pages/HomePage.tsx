@@ -16,18 +16,23 @@ import { getCategories, getFeaturedProducts } from '../lib/api'
 import { whatsappLink } from '../lib/format'
 import { useSite } from '../lib/site-context'
 import { useAsync } from '../lib/useAsync'
+import { defaultContent } from '../data/content'
+
+/** نصوص الصفحة من لوحة التحكم (أو الافتراضية لحد ما تتحمّل) */
+const useContent = () => useSite()?.content ?? defaultContent
 
 const ease = [0.22, 1, 0.36, 1] as const
 
 export function HomePage() {
+  const content = useContent()
   return (
     <>
       <Hero />
-      <DripRibbon />
+      <DripRibbon words={content.ribbon.words} />
       <Categories />
       <FeaturedProducts />
-      <Journey />
-      <NameOnTray />
+      <Journey content={content.journey} />
+      <NameOnTray content={content.nameSection} />
       <HowToOrder />
     </>
   )
@@ -45,6 +50,7 @@ const floating = [
 
 function Hero() {
   const site = useSite()
+  const { hero } = useContent()
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const archY = useTransform(scrollYProgress, [0, 1], [0, 80])
@@ -73,7 +79,7 @@ function Hero() {
           >
             <span className="h-px w-8 bg-cocoa/40" />
             <span dir="ltr" className="font-latin text-xs tracking-[0.45em] text-cocoa/70 uppercase">
-              Belgian Chocolate
+              {hero.eyebrow}
             </span>
           </motion.div>
 
@@ -84,7 +90,7 @@ function Hero() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{ delay: 0.3, duration: 1.1, ease }}
             >
-              شوكولا بلجيكية،
+              {hero.titleLine1}
             </motion.span>
             <motion.span
               className="relative inline-block text-cocoa"
@@ -92,7 +98,7 @@ function Hero() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{ delay: 0.55, duration: 1.1, ease }}
             >
-              بروح زمان
+              {hero.titleLine2}
               {/* خط شوكولا بينرسم تحت الكلمة وبينقط */}
               <svg aria-hidden viewBox="0 0 300 40" className="absolute -bottom-6 left-0 w-full overflow-visible" preserveAspectRatio="none">
                 <motion.path
@@ -123,7 +129,7 @@ function Hero() {
             transition={{ delay: 0.9, duration: 0.8, ease }}
             className="mx-auto mt-8 max-w-md text-lg leading-loose text-cocoa-deep/75 md:mx-0"
           >
-            صواني وهدايا بتنرتب باليد بتلة بتلة، وبتنكتب عليها أساميكم وتواريخكم الحلوة.
+            {hero.text}
           </motion.p>
 
           <motion.div
@@ -138,7 +144,7 @@ function Hero() {
             >
               {/* شوكولا غامقة بتعبي الزر من تحت */}
               <span className="absolute inset-0 translate-y-full rounded-[50%_50%_0_0] bg-cocoa-deep transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-0 group-hover:rounded-none" />
-              <span className="relative">اكتشف التشكيلة</span>
+              <span className="relative">{hero.primaryCta}</span>
               <ArrowLeft className="relative size-4 transition-transform group-hover:-translate-x-1" aria-hidden />
             </Link>
             {site && (
@@ -149,7 +155,7 @@ function Hero() {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-olive/40 px-8 py-4 text-olive transition hover:border-olive hover:bg-olive/5 sm:w-auto"
               >
                 <MessageCircle className="size-4" aria-hidden />
-                اسألنا على واتساب
+                {hero.secondaryCta}
               </a>
             )}
           </motion.div>
@@ -160,7 +166,7 @@ function Hero() {
             transition={{ delay: 1.4, duration: 1 }}
             className="mt-10 flex items-center justify-center gap-4 text-sm text-cocoa/70 md:justify-start"
           >
-            {['بلجيكية ١٠٠٪', 'شغل إيد', 'بأساميكم'].map((t, i) => (
+            {hero.chips.map((t, i) => (
               <li key={t} className="flex items-center gap-4">
                 {i > 0 && <span className="size-1 rounded-full bg-caramel" />}
                 {t}
@@ -215,12 +221,13 @@ function Hero() {
 
 function Categories() {
   const { data: categories } = useAsync(getCategories)
+  const { categories: text } = useContent()
 
   return (
     <section id="categories" className="relative scroll-mt-20 overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading eyebrow="Our Chocolate" title="زهرة الأقسام" description="متل صوانينا: كل بتلة نوع. اختار البتلة اللي بتشبهك." />
-        {categories ? <CategoryFlower categories={categories} /> : <div className="mx-auto aspect-square max-w-md animate-pulse rounded-full bg-sand/30" />}
+        <SectionHeading eyebrow={text.eyebrow} title={text.title} description={text.description} />
+        {categories ? <CategoryFlower categories={categories} hint={text.hint} /> : <div className="mx-auto aspect-square max-w-md animate-pulse rounded-full bg-sand/30" />}
       </div>
     </section>
   )
@@ -230,11 +237,12 @@ function Categories() {
 
 function FeaturedProducts() {
   const { data: products, loading } = useAsync(getFeaturedProducts)
+  const { products: text } = useContent()
 
   return (
     <section className="relative bg-cream/60 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading eyebrow="Signature" title="هدايا ملفوفة إلك" description="كل صينية بتوصلك ملفوفة بورق الليدي — وهون كمان. استنى لحظة وبتنفتح." />
+        <SectionHeading eyebrow={text.eyebrow} title={text.title} description={text.description} />
 
         {loading ? (
           <div className="grid grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:gap-x-10">
@@ -263,17 +271,15 @@ function FeaturedProducts() {
 
 /* ------------------------------------------------------------------ */
 
-const steps = [
-  { icon: ShoppingBag, title: 'اختار', text: 'اختار الصينية أو العلبة والحجم اللي بيناسبك.' },
-  { icon: PenLine, title: 'خصّص', text: 'اكتب الاسم أو التاريخ أو العبارة اللي بدك ياها.' },
-  { icon: MessageCircle, title: 'ابعت', text: 'بنفتحلك واتساب برسالة جاهزة، وإحنا بنكمل معك.' },
-]
+const stepIcons = [ShoppingBag, PenLine, MessageCircle]
 
 function HowToOrder() {
+  const { howTo } = useContent()
+  const steps = howTo.steps.map((s, i) => ({ ...s, icon: stepIcons[i] ?? ShoppingBag }))
   return (
     <section id="how-to-order" className="scroll-mt-20 py-20 md:py-28">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <SectionHeading eyebrow="How to order" title="كيف تطلب؟" description="ثلاث خطوات وبس — بدون حسابات ولا تعقيد." />
+        <SectionHeading eyebrow={howTo.eyebrow} title={howTo.title} description={howTo.description} />
 
         <ol className="relative grid gap-10 md:grid-cols-3 md:gap-6">
           {/* خط شوكولا بيوصل بين الخطوات */}

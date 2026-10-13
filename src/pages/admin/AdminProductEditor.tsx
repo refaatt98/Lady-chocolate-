@@ -5,6 +5,7 @@ import { TrayPreview } from '../../components/TrayPreview'
 import { Button, Card, Field, TagInput, TextArea, TextInput, Toggle, errorText, useToast } from '../../components/admin/ui'
 import { adminDeleteImage, adminGetProduct, adminSaveProduct, adminUploadImage, getCategories } from '../../lib/api'
 import { compressImage } from '../../lib/image'
+import { DEFAULT_STORAGE_NOTE } from '../../data/content'
 import type { Category, CustomizationField, ProductInput, ProductSize, TrayPreviewSpec } from '../../types'
 
 const emptyProduct: ProductInput = {
@@ -20,6 +21,8 @@ const emptyProduct: ProductInput = {
   featured: false,
   active: true,
   sort: 0,
+  storageNote: DEFAULT_STORAGE_NOTE,
+  customizationEnabled: true,
 }
 
 /** خانات تخصيص جاهزة بكبسة */
@@ -204,8 +207,19 @@ export function AdminProductEditor() {
         </Card>
 
         {/* ---------- التخصيص ---------- */}
-        <Card title="خانات التخصيص" description="شو بيكتب الزبون؟ (اسم، تاريخ، عبارة...) — بتنبعت مع الطلب، وبتنكتب على المعاينة.">
-          <div className="space-y-3">
+        <Card
+          title="خانات التخصيص"
+          description="شو بيكتب الزبون؟ (اسم، تاريخ، عبارة...) — بتنبعت مع الطلب، وبتنكتب على المعاينة."
+          action={
+            <Toggle
+              checked={product.customizationEnabled !== false}
+              onChange={(v) => set({ customizationEnabled: v })}
+              label={product.customizationEnabled !== false ? 'ظاهرة' : 'مخفية'}
+              hint="خطوة 'خصّصها' بصفحة المنتج"
+            />
+          }
+        >
+          <div className={`space-y-3 transition ${product.customizationEnabled === false ? 'pointer-events-none opacity-40' : ''}`}>
             {fields.map((f, i) => (
               <div key={i} className="grid gap-2 rounded-xl border border-sand-deep/40 p-3 sm:grid-cols-[1fr_1fr_6rem_auto]">
                 <Field label="العنوان">
@@ -245,6 +259,21 @@ export function AdminProductEditor() {
 
         {/* ---------- معاينة الاسم ---------- */}
         <PreviewEditor product={product} set={set} error={errors.preview} />
+
+        {/* ---------- الحفظ والتقديم ---------- */}
+        <Card
+          title="الحفظ والتقديم"
+          description="بيطلع بصفحة المنتج تحت 'المكوّنات'. امسحه كله إذا ما بدك ياه يطلع."
+          action={
+            product.storageNote !== DEFAULT_STORAGE_NOTE ? (
+              <Button variant="ghost" onClick={() => set({ storageNote: DEFAULT_STORAGE_NOTE })}>
+                النص الأصلي
+              </Button>
+            ) : undefined
+          }
+        >
+          <TextArea rows={3} value={product.storageNote ?? ''} onChange={(e) => set({ storageNote: e.target.value })} placeholder="مثلًا: بتنحفظ أسبوعين بمكان بارد..." />
+        </Card>
 
         {/* ---------- الظهور ---------- */}
         <Card title="الظهور">

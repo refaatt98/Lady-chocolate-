@@ -1,6 +1,6 @@
 import { ShieldCheck, Trash2, UserPlus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Button, Card, Field, TextInput, errorText, useToast } from '../../components/admin/ui'
+import { Button, Card, Field, PageHeader, TextInput, errorText, useToast } from '../../components/admin/ui'
 import { adminAddAdmin, adminListAdmins, adminRemoveAdmin, type AdminAccount } from '../../lib/api'
 
 const dateFmt = new Intl.DateTimeFormat('ar', { dateStyle: 'medium' })
@@ -53,8 +53,7 @@ export function AdminAccounts() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-4xl text-olive">المشرفين</h1>
-      <p className="mt-1 mb-6 text-sm text-cocoa/60">كل واحد بيدخل بإيميله وكلمة سره، وكلهم بيقدروا يعدّلوا كل إشي.</p>
+      <PageHeader icon={ShieldCheck} title="المشرفين" description="كل واحد بيدخل بإيميله وكلمة سره، وكلهم بيقدروا يعدّلوا كل إشي." />
 
       <div className="space-y-6">
         <Card title="المشرفين الحاليين">

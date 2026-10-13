@@ -1,7 +1,7 @@
-import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, Pencil, Plus, Star, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Copy, Eye, EyeOff, Package, Plus, Search, Star, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Button, TextInput, errorText, useToast } from '../../components/admin/ui'
+import { Button, EmptyState, PageHeader, Pill, TextInput, errorText, useToast } from '../../components/admin/ui'
 import { adminDeleteProduct, adminListProducts, adminSaveProduct, adminUpdateProduct, getCategories } from '../../lib/api'
 import { formatPrice } from '../../lib/format'
 import type { Category, Product } from '../../types'
@@ -93,82 +93,92 @@ export function AdminProducts() {
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? '—'
   const canMove = !query && !category
 
-  return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl text-olive">المنتجات</h1>
-          <p className="mt-1 text-sm text-cocoa/60">{products ? `${products.length} منتج · ${products.filter((p) => p.active !== false).length} ظاهر` : '...'}</p>
-        </div>
-        <Link to="/admin/products/new" className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2.5 text-sm font-medium text-parchment hover:bg-olive-deep">
-          <Plus className="size-4" /> منتج جديد
-        </Link>
-      </div>
+  const shownCount = products?.filter((p) => p.active !== false).length ?? 0
 
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row">
-        <TextInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ابحث بالاسم..." className="sm:max-w-xs" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-xl border border-sand-deep/60 bg-parchment px-3.5 py-2.5 text-sm">
-          <option value="">كل الأقسام</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+  return (
+    <div className="mx-auto max-w-6xl">
+      <PageHeader
+        icon={Package}
+        title="المنتجات"
+        description={products ? `${products.length} منتج · ${shownCount} ظاهر للزبائن` : 'لحظة...'}
+        actions={
+          <Link to="/admin/products/new" className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2.5 text-sm font-medium text-parchment hover:bg-olive-deep">
+            <Plus className="size-4" /> منتج جديد
+          </Link>
+        }
+      />
+
+      {/* بحث وفلترة */}
+      <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-sand-deep/40 bg-parchment/70 p-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute inset-y-0 right-3 my-auto size-4 text-cocoa/40" />
+          <TextInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ابحث بالاسم..." className="ps-9" />
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto">
+          {[{ id: '', name: 'الكل' }, ...categories].map((c) => (
+            <button
+              key={c.id || 'all'}
+              type="button"
+              onClick={() => setCategory(c.id)}
+              className={`shrink-0 rounded-full px-3.5 py-2 text-sm transition ${category === c.id ? 'bg-olive text-parchment' : 'text-cocoa-deep/70 hover:bg-sand/50'}`}
+            >
+              {c.name}
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       {!products ? (
-        <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-sand/40" />)}</div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="aspect-[3/4] animate-pulse rounded-3xl bg-sand/40" />)}</div>
       ) : shown.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-sand-deep/60 px-6 py-16 text-center">
-          <p className="font-display text-3xl text-olive">ما في منتجات</p>
-          <Link to="/admin/products/new" className="mt-4 inline-block text-sm text-olive underline">ضيف أول منتج</Link>
-        </div>
+        <EmptyState title="ما في منتجات" text="ضيف أول صينية أو علبة — بتاخد دقيقتين." action={<Link to="/admin/products/new" className="rounded-full bg-olive px-5 py-2.5 text-sm text-parchment">ضيف منتج</Link>} />
       ) : (
-        <ul className="space-y-3">
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
           {shown.map((p) => {
             const index = products.indexOf(p)
             const hidden = p.active === false
             return (
-              <li key={p.id} className={`flex flex-wrap items-center gap-4 rounded-2xl border border-sand-deep/40 bg-parchment p-3 sm:flex-nowrap ${hidden ? 'opacity-60' : ''}`}>
-                <Link to={`/admin/products/${p.id}`} className="flex min-w-0 basis-full items-center gap-4 sm:basis-auto sm:flex-1">
+              <li key={p.id} className={`group flex flex-col overflow-hidden rounded-3xl border border-sand-deep/40 bg-parchment transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgb(92_59_47/0.6)] ${hidden ? 'opacity-60' : ''}`}>
+                <Link to={`/admin/products/${p.id}`} className="relative block">
                   {p.images[0] ? (
-                    <img src={p.images[0]} alt="" className="size-16 shrink-0 rounded-t-full rounded-b-lg object-cover object-[center_62%]" />
+                    <img src={p.images[0]} alt="" className="aspect-[4/5] w-full object-cover object-[center_62%] transition duration-700 group-hover:scale-105" />
                   ) : (
-                    <span className="grid size-16 shrink-0 place-items-center rounded-lg bg-sand/50 text-xs text-cocoa/50">بدون صورة</span>
+                    <span className="grid aspect-[4/5] w-full place-items-center bg-sand/50 text-xs text-cocoa/50">بدون صورة</span>
                   )}
-                  <span className="min-w-0">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="font-display text-xl text-olive">{p.name}</span>
-                      {hidden && <span className="rounded-full bg-sand px-2 py-0.5 text-[0.65rem]">مخفي</span>}
-                      {p.featured && <span className="rounded-full bg-caramel/25 px-2 py-0.5 text-[0.65rem] text-cocoa">بالرئيسية</span>}
-                    </span>
-                    <span className="block text-xs text-cocoa/60">
-                      {catName(p.categoryId)} · {p.sizes.length} أحجام · من {formatPrice(p.price)}
-                    </span>
+                  <span className="absolute top-2 right-2 flex flex-col items-end gap-1">
+                    {hidden && <Pill>مخفي</Pill>}
+                    {p.featured && <Pill tone="caramel">⭐ بالرئيسية</Pill>}
                   </span>
+                  <span className="absolute bottom-2 left-2 rounded-full bg-parchment/95 px-2.5 py-1 text-xs font-semibold text-cocoa shadow">من {formatPrice(p.price)}</span>
                 </Link>
-                <div className="flex w-full items-center justify-end gap-0.5 border-t border-sand/60 pt-2 sm:w-auto sm:border-0 sm:pt-0">
-                  {canMove && (
-                    <>
-                      <IconBtn label="لفوق" onClick={() => move(index, -1)} disabled={index === 0}><ArrowUp className="size-4" /></IconBtn>
-                      <IconBtn label="لتحت" onClick={() => move(index, 1)} disabled={index === products.length - 1}><ArrowDown className="size-4" /></IconBtn>
-                    </>
-                  )}
-                  <IconBtn label={p.featured ? 'شيله من الرئيسية' : 'حطه بالرئيسية'} onClick={() => update(p, { featured: !p.featured })} active={p.featured}>
-                    <Star className={`size-4 ${p.featured ? 'fill-caramel text-caramel' : ''}`} />
-                  </IconBtn>
-                  <IconBtn label={hidden ? 'أظهره' : 'اخفيه'} onClick={() => update(p, { active: hidden })}>
-                    {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </IconBtn>
-                  <IconBtn label="نسخة" onClick={() => duplicate(p)}><Copy className="size-4" /></IconBtn>
-                  <IconBtn label="تعديل" onClick={() => navigate(`/admin/products/${p.id}`)}><Pencil className="size-4" /></IconBtn>
-                  <IconBtn label="حذف" onClick={() => remove(p)}><Trash2 className="size-4" /></IconBtn>
+                <div className="flex flex-1 flex-col p-3">
+                  <Link to={`/admin/products/${p.id}`} className="font-display line-clamp-1 text-xl text-olive hover:text-cocoa">{p.name}</Link>
+                  <p className="text-xs text-cocoa/55">{catName(p.categoryId)} · {p.sizes.length} أحجام</p>
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-1 border-t border-sand/60 pt-2">
+                    <div className="flex">
+                      <IconBtn label={p.featured ? 'شيله من الرئيسية' : 'حطه بالرئيسية'} onClick={() => update(p, { featured: !p.featured })} active={p.featured}>
+                        <Star className={`size-4 ${p.featured ? 'fill-caramel text-caramel' : ''}`} />
+                      </IconBtn>
+                      <IconBtn label={hidden ? 'أظهره' : 'اخفيه'} onClick={() => update(p, { active: hidden })}>
+                        {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </IconBtn>
+                      <IconBtn label="نسخة" onClick={() => duplicate(p)}><Copy className="size-4" /></IconBtn>
+                      <IconBtn label="حذف" onClick={() => remove(p)}><Trash2 className="size-4" /></IconBtn>
+                    </div>
+                    {canMove && (
+                      <div className="flex">
+                        <IconBtn label="لقدام" onClick={() => move(index, -1)} disabled={index === 0}><ArrowRight className="size-4" /></IconBtn>
+                        <IconBtn label="لورا" onClick={() => move(index, 1)} disabled={index === products.length - 1}><ArrowLeft className="size-4" /></IconBtn>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </li>
             )
           })}
         </ul>
       )}
-      <p className="mt-6 text-xs text-cocoa/50">⭐ = بيطلع بالرئيسية · 👁 = ظاهر للزبائن · الأسهم بتغيّر الترتيب بالموقع</p>
+      <p className="mt-6 text-xs text-cocoa/50">⭐ بيطلع بالرئيسية · 👁 ظاهر للزبائن · الأسهم بتغيّر ترتيبه بالموقع</p>
     </div>
   )
 }

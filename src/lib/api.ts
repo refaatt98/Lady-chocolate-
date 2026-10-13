@@ -4,8 +4,10 @@
  */
 import { categories as mockCategories } from '../data/categories'
 import { products as mockProducts } from '../data/products'
+import { mergeContent } from '../data/content'
 import { site as mockSite } from '../data/site'
 import type {
+  AppliedPromo,
   Category,
   CheckoutInfo,
   CustomizationField,
@@ -14,7 +16,10 @@ import type {
   OrderStatus,
   Product,
   ProductInput,
+  DeliveryZone,
   ProductSize,
+  PromoCode,
+  SiteContent,
   SiteInfo,
   TrayPreviewSpec,
 } from '../types'
@@ -33,6 +38,7 @@ interface CategoryRow {
   latin_name: string
   description: string
   tone: Category['tone']
+  color: string | null
   sort: number
 }
 
@@ -67,6 +73,8 @@ interface ProductRow {
   active: boolean
   sort: number
   preview: TrayPreviewSpec | null
+  storage_note: string | null
+  customization_enabled: boolean | null
   product_sizes?: SizeRow[]
   product_fields?: FieldRow[]
 }
@@ -83,6 +91,7 @@ interface SettingsRow {
   delivery_note: string
   delivery_cities: string[]
   min_lead_days: number
+  content: unknown
 }
 
 interface OrderRow {
@@ -94,6 +103,9 @@ interface OrderRow {
   status: OrderStatus
   admin_note: string
   created_at: string
+  promo_code: string | null
+  discount: number | string
+  delivery_fee: number | string
 }
 
 const bySort = <T extends { sort: number }>(a: T, b: T) => a.sort - b.sort
@@ -105,6 +117,7 @@ const toCategory = (r: CategoryRow): Category => ({
   latinName: r.latin_name,
   description: r.description,
   tone: r.tone,
+  color: r.color ?? undefined,
   sort: r.sort,
 })
 
@@ -138,6 +151,8 @@ const toProduct = (r: ProductRow): Product => {
     badge: r.badge ?? undefined,
     active: r.active,
     sort: r.sort,
+    storageNote: r.storage_note ?? undefined,
+    customizationEnabled: r.customization_enabled ?? true,
   }
 }
 
@@ -153,6 +168,7 @@ const toSite = (r: SettingsRow): SiteInfo => ({
   deliveryNote: r.delivery_note,
   deliveryCities: r.delivery_cities,
   minLeadDays: r.min_lead_days,
+  content: mergeContent(r.content),
 })
 
 /*
@@ -214,6 +230,9 @@ const toOrder = (r: OrderRow): OrderRecord => ({
   status: r.status,
   adminNote: r.admin_note,
   createdAt: r.created_at,
+  promoCode: r.promo_code ?? undefined,
+  discount: num(r.discount),
+  deliveryFee: num(r.delivery_fee),
 })
 
 const PRODUCT_SELECT = '*, product_sizes(*), product_fields(*)'
@@ -302,15 +321,65 @@ const newReference = () => {
  * تسجيل طلبية بجدول orders، وبيرجع رقم الطلب (بينكتب برسالة الواتساب).
  * إذا الحفظ فشل، ما منوقف الزبون — الطلب بيوصل على الواتساب بكل الأحوال.
  */
-export async function submitOrder(order: { items: OrderItem[]; info: CheckoutInfo; total: number }): Promise<{ reference: string }> {
+export async function submitOrder(order: {
+  items: OrderItem[]
+  info: CheckoutInfo
+  /** المجموع النهائي: المنتجات − الخصم + التوصيل */
+  total: number
+  promo?: AppliedPromo | null
+  deliveryFee?: number
+}): Promise<{ reference: string }> {
   const reference = newReference()
   if (!supabase) {
     await delay()
     return { reference }
   }
-  const { error } = await supabase.from('orders').insert({ reference, items: order.items, info: order.info, total: order.total })
+  // السيرفر بيعيد حساب الخصم (trigger) — ما منثق بالرقم من المتصفح
+  const { error } = await supabase.from('orders').insert({
+    reference,
+    items: order.items,
+    info: order.info,
+    total: order.total,
+    discount: order.promo?.discount ?? 0,
+    promo_code: order.promo?.code ?? null,
+    delivery_fee: order.deliveryFee ?? 0,
+  })
   if (error) console.warn('ما انحفظ الطلب بقاعدة البيانات:', error.message)
   return { reference }
+}
+
+/* ---------- مناطق التوصيل ---------- */
+
+interface ZoneRow {
+  id: string
+  name: string
+  price: number | string | null
+  active: boolean
+  sort: number
+}
+const toZone = (r: ZoneRow): DeliveryZone => ({ id: r.id, name: r.name, price: r.price === null ? null : Number(r.price), active: r.active, sort: r.sort })
+
+/** مناطق التوصيل الفعّالة (للسلة) */
+export async function getDeliveryZones(): Promise<DeliveryZone[]> {
+  if (!supabase) return mockSite.deliveryCities.map((name, i) => ({ id: name, name, price: null, active: true, sort: i }))
+  const rows = check(await supabase.from('delivery_zones').select('*').eq('active', true).order('sort')) as ZoneRow[]
+  return rows.map(toZone)
+}
+
+/** التحقق من كود خصم بالسلة — بيرجع الخصم أو بيرمي غلط مفهوم */
+export async function checkPromo(code: string, subtotal: number): Promise<AppliedPromo> {
+  if (!supabase) throw new Error('أكواد الخصم بتشتغل لما يكون الموقع مربوط بقاعدة البيانات')
+  const { data, error } = await supabase.rpc('check_promo', { promo_code: code, subtotal })
+  if (error) throw new Error('ما قدرنا نتحقق من الكود — جرّب كمان مرة')
+  const row = (Array.isArray(data) ? data[0] : data) as { code: string | null; kind: 'percent' | 'fixed'; value: number; discount: number; error: string | null } | undefined
+  if (!row || row.error) {
+    const e = row?.error ?? 'promo_invalid'
+    if (e.startsWith('promo_min_total:')) throw new Error(`الكود بيشتغل على طلبات من ${Number(e.split(':')[1])} ₪ وفوق`)
+    if (e === 'promo_expired') throw new Error('الكود منتهي أو لسا ما بلّش')
+    if (e === 'promo_used_up') throw new Error('الكود خلص استعماله')
+    throw new Error('الكود مش صحيح')
+  }
+  return { code: row.code!, kind: row.kind, value: Number(row.value), discount: Number(row.discount) }
 }
 
 /* ================================================================== */
@@ -438,6 +507,8 @@ export async function adminSaveProduct(input: ProductInput): Promise<string> {
     active: input.active ?? true,
     sort: input.sort ?? 0,
     preview: input.preview ?? null,
+    customization_enabled: input.customizationEnabled ?? true,
+    ...(input.storageNote !== undefined ? { storage_note: input.storageNote } : {}),
   }
 
   let id = input.id
@@ -515,6 +586,7 @@ export async function adminSaveCategory(category: Omit<Category, 'id'> & { id?: 
     latin_name: category.latinName,
     description: category.description,
     tone: category.tone,
+    color: category.color || null,
     sort: category.sort ?? 0,
   }
   if (category.id) check(await sb.from('categories').update(row).eq('id', category.id))
@@ -542,13 +614,100 @@ export async function adminSaveSettings(s: SiteInfo) {
         instagram: s.instagram,
         address: s.address,
         hours: s.hours,
-        delivery_note: s.deliveryNote,
-        delivery_cities: s.deliveryCities,
-        min_lead_days: s.minLeadDays,
         updated_at: new Date().toISOString(),
       })
       .eq('id', 1),
   )
+}
+
+/** حفظ نصوص الصفحة الرئيسية */
+export async function adminSaveContent(content: SiteContent) {
+  const sb = requireBackend()
+  check(await sb.from('site_settings').update({ content, updated_at: new Date().toISOString() }).eq('id', 1))
+}
+
+/* ---------- التوصيل (أدمن) ---------- */
+
+export async function adminListZones(): Promise<DeliveryZone[]> {
+  const sb = requireBackend()
+  const rows = check(await sb.from('delivery_zones').select('*').order('sort').order('created_at')) as ZoneRow[]
+  return rows.map(toZone)
+}
+
+export async function adminSaveZone(z: Omit<DeliveryZone, 'id'> & { id?: string }) {
+  const sb = requireBackend()
+  const row = { name: z.name.trim(), price: z.price, active: z.active, sort: z.sort }
+  if (z.id) check(await sb.from('delivery_zones').update(row).eq('id', z.id))
+  else check(await sb.from('delivery_zones').insert(row))
+}
+
+export async function adminDeleteZone(id: string) {
+  const sb = requireBackend()
+  check(await sb.from('delivery_zones').delete().eq('id', id))
+}
+
+/** ملاحظة التوصيل وأيام التحضير (من جدول الإعدادات) */
+export async function adminSaveDeliverySettings(deliveryNote: string, minLeadDays: number) {
+  const sb = requireBackend()
+  check(await sb.from('site_settings').update({ delivery_note: deliveryNote, min_lead_days: minLeadDays, updated_at: new Date().toISOString() }).eq('id', 1))
+}
+
+/* ---------- أكواد الخصم ---------- */
+
+interface PromoRow {
+  id: string
+  code: string
+  kind: 'percent' | 'fixed'
+  value: number | string
+  min_total: number | string
+  max_uses: number | null
+  uses: number
+  starts_at: string | null
+  expires_at: string | null
+  active: boolean
+  note: string
+}
+
+const toPromo = (r: PromoRow): PromoCode => ({
+  id: r.id,
+  code: r.code,
+  kind: r.kind,
+  value: Number(r.value),
+  minTotal: Number(r.min_total),
+  maxUses: r.max_uses ?? undefined,
+  uses: r.uses,
+  startsAt: r.starts_at ?? undefined,
+  expiresAt: r.expires_at ?? undefined,
+  active: r.active,
+  note: r.note,
+})
+
+export async function adminListPromos(): Promise<PromoCode[]> {
+  const sb = requireBackend()
+  const rows = check(await sb.from('promo_codes').select('*').order('created_at', { ascending: false })) as PromoRow[]
+  return rows.map(toPromo)
+}
+
+export async function adminSavePromo(p: Omit<PromoCode, 'id' | 'uses'> & { id?: string }) {
+  const sb = requireBackend()
+  const row = {
+    code: p.code.trim().toUpperCase(),
+    kind: p.kind,
+    value: p.value,
+    min_total: p.minTotal || 0,
+    max_uses: p.maxUses || null,
+    starts_at: p.startsAt || null,
+    expires_at: p.expiresAt || null,
+    active: p.active,
+    note: p.note,
+  }
+  if (p.id) check(await sb.from('promo_codes').update(row).eq('id', p.id))
+  else check(await sb.from('promo_codes').insert(row))
+}
+
+export async function adminDeletePromo(id: string) {
+  const sb = requireBackend()
+  check(await sb.from('promo_codes').delete().eq('id', id))
 }
 
 /* ---------- الطلبات ---------- */

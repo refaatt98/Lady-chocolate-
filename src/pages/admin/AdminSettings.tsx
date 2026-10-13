@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Field, TagInput, TextArea, TextInput, errorText, useToast } from '../../components/admin/ui'
+import { Settings } from 'lucide-react'
+import { Link } from 'react-router'
+import { Button, Card, Field, PageHeader, TextInput, errorText, useToast } from '../../components/admin/ui'
 import { adminChangePassword, adminSaveSettings, getSiteInfo } from '../../lib/api'
 import type { SiteInfo } from '../../types'
 
@@ -33,7 +35,7 @@ export function AdminSettings() {
 
   return (
     <div className="mx-auto max-w-3xl pb-10">
-      <h1 className="font-display mb-6 text-4xl text-olive">الإعدادات</h1>
+      <PageHeader icon={Settings} title="الإعدادات" description="رقم الواتساب، العنوان، الهوية، وحسابك." />
       <div className="space-y-6">
         <Card title="التواصل" description="الطلبات كلها بتوصل على رقم الواتساب هاد.">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -59,18 +61,11 @@ export function AdminSettings() {
           </div>
         </Card>
 
-        <Card title="التوصيل والطلبات">
-          <div className="grid gap-4">
-            <Field label="مدن التوصيل المقترحة" hint="بتطلع كاقتراحات بخانة المدينة — الزبون بيقدر يكتب غيرها">
-              <TagInput value={s.deliveryCities} onChange={(deliveryCities) => set({ deliveryCities })} placeholder="رام الله" />
-            </Field>
-            <Field label="ملاحظة التوصيل" hint="بتطلع تحت العنوان بصفحة الطلب">
-              <TextArea rows={2} value={s.deliveryNote} onChange={(e) => set({ deliveryNote: e.target.value })} />
-            </Field>
-            <Field label="أقل عدد أيام للتحضير" hint="الزبون ما بيقدر يختار موعد أقرب من هيك">
-              <TextInput type="number" min={0} max={60} value={s.minLeadDays} onChange={(e) => set({ minLeadDays: Math.max(0, Number(e.target.value)) })} className="max-w-32" />
-            </Field>
-          </div>
+        <Card title="التوصيل">
+          <p className="text-sm text-cocoa/70">
+            مدن التوصيل وأسعارها، ملاحظة التوصيل، وأيام التحضير صاروا بصفحة لحالها:{' '}
+            <Link to="/admin/delivery" className="text-olive underline">التوصيل ←</Link>
+          </p>
         </Card>
 
         <Card title="الهوية">

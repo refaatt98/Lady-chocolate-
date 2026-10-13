@@ -1,13 +1,14 @@
-import { ArrowLeft, Check, ChevronDown, Gift, MessageCircle, Minus, PenLine, Plus, Store, Trash2, Truck } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, Gift, MessageCircle, Minus, PenLine, Plus, Store, Tag, Trash2, Truck, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ChocolatePetal } from '../components/ChocolatePetal'
-import { submitOrder } from '../lib/api'
+import { checkPromo, getDeliveryZones, submitOrder } from '../lib/api'
+import { useAsync } from '../lib/useAsync'
 import { CURRENCY, formatPrice, whatsappLink } from '../lib/format'
 import { orderMessage, timeSlots, useOrder, validateCheckout, type CheckoutErrors } from '../lib/order'
 import { useSite } from '../lib/site-context'
-import type { CheckoutInfo, OrderItem } from '../types'
+import type { CheckoutInfo, DeliveryZone, OrderItem } from '../types'
 
 /** تاريخ اليوم + أيام، بصيغة yyyy-mm-dd (للـ input type=date) */
 const isoDate = (addDays: number) => {
@@ -17,7 +18,12 @@ const isoDate = (addDays: number) => {
 }
 
 export function CartPage() {
-  const { items, total, info, setInfo, clear } = useOrder()
+  const { items, total, info, setInfo, clear, promo } = useOrder()
+  const { data: zones } = useAsync(getDeliveryZones)
+  const zone = info.method === 'delivery' ? zones?.find((z) => z.name === info.city.trim()) : undefined
+  /** رقم = سعر التوصيل، null = بنتفق عليه، undefined = لسا ما اختار مدينة */
+  const deliveryFee: number | null | undefined = info.method !== 'delivery' ? undefined : zone ? zone.price : info.city.trim() ? null : undefined
+  const finalTotal = Math.max(0, total - (promo?.discount ?? 0)) + (typeof deliveryFee === 'number' ? deliveryFee : 0)
   const site = useSite()
   const navigate = useNavigate()
   const [errors, setErrors] = useState<CheckoutErrors>({})
@@ -26,7 +32,7 @@ export function CartPage() {
   const [showPreview, setShowPreview] = useState(false)
 
   const minDate = isoDate(site?.minLeadDays ?? 0)
-  const message = useMemo(() => orderMessage(items, total, CURRENCY, info), [items, total, info])
+  const message = useMemo(() => orderMessage(items, total, CURRENCY, info, undefined, promo, deliveryFee), [items, total, info, promo, deliveryFee])
 
   const update = (patch: Partial<CheckoutInfo>) => {
     setInfo(patch)
@@ -48,8 +54,8 @@ export function CartPage() {
     const win = window.open('', '_blank')
     setSending(true)
     try {
-      const { reference } = await submitOrder({ items, info, total })
-      const url = whatsappLink(site.whatsapp, orderMessage(items, total, CURRENCY, info, reference))
+      const { reference } = await submitOrder({ items, info, total: finalTotal, promo, deliveryFee: typeof deliveryFee === 'number' ? deliveryFee : 0 })
+      const url = whatsappLink(site.whatsapp, orderMessage(items, total, CURRENCY, info, reference, promo, deliveryFee))
       if (win) win.location.href = url
       else window.location.href = url
       setSent({ reference, url })
@@ -152,10 +158,7 @@ export function CartPage() {
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                   <div className="grid gap-5 pt-6 sm:grid-cols-2">
                     <Field id="city" label="المدينة / البلد" error={errors.city}>
-                      <input id="field-city" list="cities" value={info.city} onChange={(e) => update({ city: e.target.value })} placeholder="مثلًا: رام الله" className={inputCls(errors.city)} />
-                      <datalist id="cities">
-                        {site?.deliveryCities.map((c) => <option key={c} value={c} />)}
-                      </datalist>
+                      <CityPicker id="field-city" value={info.city} onChange={(city) => update({ city })} zones={zones ?? []} invalid={!!errors.city} />
                     </Field>
                     <Field id="receiverPhone" label="رقم المستلم (إذا غير رقمك)" error={errors.receiverPhone}>
                       <input
@@ -268,12 +271,26 @@ export function CartPage() {
               ))}
               <li className="flex justify-between gap-3 text-cocoa/70">
                 <span>{info.method === 'delivery' ? 'التوصيل' : 'الاستلام'}</span>
-                <span>{info.method === 'delivery' ? 'منأكده معك' : 'مجاني'}</span>
+                <span>
+                  {info.method !== 'delivery'
+                    ? 'مجاني'
+                    : deliveryFee === undefined
+                      ? 'اختار المدينة'
+                      : deliveryFee === null
+                        ? 'منأكده معك'
+                        : deliveryFee === 0
+                          ? 'مجاني'
+                          : formatPrice(deliveryFee)}
+                </span>
               </li>
             </ul>
+            <PromoBox total={total} />
             <div className="mt-5 flex items-end justify-between border-t border-olive/15 pt-5">
-              <span className="text-cocoa/70">المجموع التقريبي</span>
-              <span className="font-display text-4xl text-cocoa">{formatPrice(total)}</span>
+              <span className="text-cocoa/70">المجموع</span>
+              <span className="flex flex-col items-end">
+                {finalTotal !== total && <span className="text-sm text-cocoa/50 line-through">{formatPrice(total)}</span>}
+                <span className="font-display text-4xl text-cocoa">{formatPrice(finalTotal)}</span>
+              </span>
             </div>
 
             <button
@@ -488,5 +505,138 @@ function EmptyOrder() {
         <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" aria-hidden />
       </Link>
     </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+
+/** كود الخصم: إدخال، تحقق من السيرفر، وإعادة تحقق تلقائي لما يتغيّر المجموع */
+function PromoBox({ total }: { total: number }) {
+  const { promo, setPromo } = useOrder()
+  const [open, setOpen] = useState(!!promo)
+  const [code, setCode] = useState('')
+  const [error, setError] = useState('')
+  const [checking, setChecking] = useState(false)
+
+  // المجموع تغيّر؟ منعيد حساب الخصم (أو منشيله إذا ما عاد ينطبق)
+  useEffect(() => {
+    if (!promo) return
+    let alive = true
+    checkPromo(promo.code, total)
+      .then((p) => alive && (p.discount !== promo.discount ? setPromo(p) : undefined))
+      .catch((e: Error) => {
+        if (!alive) return
+        setPromo(null)
+        setError(e.message)
+        setOpen(true)
+      })
+    return () => {
+      alive = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total])
+
+  const apply = async () => {
+    if (!code.trim()) return
+    setChecking(true)
+    setError('')
+    try {
+      setPromo(await checkPromo(code, total))
+      setCode('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'الكود مش صحيح')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  if (promo) {
+    return (
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-olive/10 px-3 py-2.5 text-sm">
+        <span className="flex items-center gap-2 text-olive">
+          <Tag className="size-4" aria-hidden />
+          <span dir="ltr" className="font-latin font-semibold tracking-wider">{promo.code}</span>
+          <span className="text-cocoa/70">{promo.kind === 'percent' ? `${promo.value}٪` : formatPrice(promo.value)}</span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="font-semibold text-olive">−{formatPrice(promo.discount)}</span>
+          <button type="button" onClick={() => setPromo(null)} aria-label="شيل الكود" className="grid size-6 place-items-center rounded-full text-cocoa/60 hover:bg-sand/60">
+            <X className="size-3.5" />
+          </button>
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4">
+      {!open ? (
+        <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1.5 text-sm text-olive underline-offset-4 hover:underline">
+          <Tag className="size-4" aria-hidden /> عندك كود خصم؟
+        </button>
+      ) : (
+        <div>
+          <div className="flex gap-2">
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === 'Enter' && apply()}
+              placeholder="كود الخصم"
+              dir="ltr"
+              autoFocus
+              className="font-latin min-w-0 flex-1 rounded-full border border-olive/25 bg-parchment px-4 py-2.5 text-right tracking-wider placeholder:font-sans placeholder:tracking-normal focus:border-olive focus:outline-none"
+            />
+            <button type="button" onClick={apply} disabled={checking || !code.trim()} className="shrink-0 rounded-full bg-cocoa px-5 text-sm text-parchment disabled:opacity-50">
+              {checking ? '...' : 'طبّق'}
+            </button>
+          </div>
+          {error && <p className="mt-2 text-xs text-cocoa">● {error}</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+
+/** المدينة: قائمة مناطق التوصيل بأسعارها + "مدينة ثانية" بكتابة حرة */
+function CityPicker({ id, value, onChange, zones, invalid }: { id: string; value: string; onChange: (v: string) => void; zones: DeliveryZone[]; invalid: boolean }) {
+  const known = zones.some((z) => z.name === value)
+  const [other, setOther] = useState(!!value && !known && zones.length > 0)
+  const priceLabel = (p: number | null) => (p === null ? 'السعر بنتفق عليه' : p === 0 ? 'توصيل مجاني' : formatPrice(p))
+
+  if (!zones.length) {
+    return <input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder="مثلًا: رام الله" className={inputCls(invalid ? 'x' : undefined)} />
+  }
+
+  return (
+    <div className="space-y-2">
+      <select
+        id={id}
+        value={other ? '__other' : known ? value : ''}
+        onChange={(e) => {
+          if (e.target.value === '__other') {
+            setOther(true)
+            onChange('')
+          } else {
+            setOther(false)
+            onChange(e.target.value)
+          }
+        }}
+        className={inputCls(invalid ? 'x' : undefined)}
+      >
+        <option value="" disabled>
+          اختار المدينة
+        </option>
+        {zones.map((z) => (
+          <option key={z.id} value={z.name}>
+            {z.name} — {priceLabel(z.price)}
+          </option>
+        ))}
+        <option value="__other">مدينة ثانية...</option>
+      </select>
+      {other && <input autoFocus value={value} onChange={(e) => onChange(e.target.value)} placeholder="اكتب اسم المدينة أو البلد" className={inputCls(invalid ? 'x' : undefined)} />}
+      {other && <p className="text-xs text-cocoa/55">سعر التوصيل لهالمنطقة منتفق عليه معك على الواتساب.</p>}
+    </div>
   )
 }

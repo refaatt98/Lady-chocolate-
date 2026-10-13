@@ -1,28 +1,60 @@
-import { MessageCircle, Sparkles } from 'lucide-react'
+import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useState } from 'react'
-import { whatsappLink } from '../lib/format'
-import { useSite } from '../lib/site-context'
-import type { TrayPreviewSpec } from '../types'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { getProductBySlug } from '../lib/api'
+import { formatPrice } from '../lib/format'
+import { useOrder } from '../lib/order'
+import { useAsync } from '../lib/useAsync'
+import type { SiteContent } from '../types'
 import { BrandPattern } from './BrandPattern'
 import { TrayPreview } from './TrayPreview'
 
-const occasions = ['عرس', 'خطوبة', 'مولود', 'نجاح', 'عيد ميلاد']
+const stripExample = (s: string) => s.replace(/^مثلًا:\s*/, '')
 
-/** "جرّب اسمك": المستخدم بيكتب الاسم والتاريخ، وبينكتبوا مباشرة على قرص الصينية بالصورة. */
-const SPEC: TrayPreviewSpec = {
-  image: '/images/products/tray-white-names-square.jpg',
-  disc: { cx: 47.7, cy: 48.2, w: 26.4, h: 22.4 },
-  main: 'names',
-}
+/**
+ * "جرّب اسمك": صينية من اختيار الأدمن (لوحة التحكم ← محتوى الموقع)،
+ * الزبون بيكتب وبيشوف النص على القرص، وبعدين بيضيفها للطلبية (مش واتساب مباشرة).
+ * الصورة ومكان القرص بيجوا من "معاينة الاسم" تبع المنتج نفسه.
+ */
+export function NameOnTray({ content }: { content: SiteContent['nameSection'] }) {
+  const { data: product } = useAsync(() => getProductBySlug(content.productSlug), [content.productSlug])
+  const order = useOrder()
+  const navigate = useNavigate()
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [occasion, setOccasion] = useState(content.occasions[0] ?? '')
+  const [sizeId, setSizeId] = useState('')
 
-export function NameOnTray() {
-  const site = useSite()
-  const [name, setName] = useState('منى ومحمود')
-  const [date, setDate] = useState('25.9.26')
-  const [occasion, setOccasion] = useState(occasions[0])
+  const fields = product?.customization ?? []
+  const preview = product?.preview
 
-  const message = `مرحبا الليدي شوكولات 🍫\nحابب أطلب صينية ${occasion}\nالاسم: ${name || '—'}\nالتاريخ: ${date || '—'}`
+  // أول ما ينزل المنتج: منعبّي الخانات بأمثلة عشان المعاينة تبين حلوة من الأول
+  useEffect(() => {
+    if (!product) return
+    setValues(Object.fromEntries((product.customization ?? []).map((f) => [f.id, stripExample(f.placeholder)])))
+    setSizeId(product.sizes[0]?.id ?? '')
+  }, [product])
+
+  // ما في منتج مناسب (محذوف أو بدون معاينة)؟ منخبّي السكشن
+  if (!product || !preview) return null
+
+  const size = product.sizes.find((s) => s.id === sizeId) ?? product.sizes[0]
+
+  const addToOrder = () => {
+    if (!size) return
+    order.add({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      image: product.images[0] ?? preview.image,
+      sizeLabel: size.label,
+      pieces: size.pieces,
+      unitPrice: size.price,
+      qty: 1,
+      details: [...(occasion ? ([['المناسبة', occasion]] as [string, string][]) : []), ...fields.map((f) => [f.label, values[f.id] ?? ''] as [string, string])],
+    })
+    navigate('/cart')
+  }
 
   return (
     <section className="relative overflow-hidden bg-sage py-20 text-cocoa-deep md:py-28">
@@ -38,11 +70,11 @@ export function NameOnTray() {
         >
           <div className="rounded-[2.5rem] border border-olive/20 bg-parchment/60 p-3">
             <TrayPreview
-              spec={SPEC}
-              top={occasion === 'عرس' || occasion === 'خطوبة' ? 'على بركة الله' : 'ألف مبروك'}
-              main={name}
-              bottom={date}
-              alt="صينية شوكولا عليها الاسم اللي كتبته"
+              spec={preview}
+              top={preview.top ? values[preview.top] ?? '' : undefined}
+              main={values[preview.main] ?? ''}
+              bottom={preview.bottom ? values[preview.bottom] ?? '' : undefined}
+              alt={`${product.name} مع النص اللي كتبته`}
               className="rounded-[2rem]"
             />
           </div>
@@ -59,71 +91,83 @@ export function NameOnTray() {
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
           <p dir="ltr" className="font-latin text-center text-xs tracking-[0.4em] text-cocoa/60 uppercase md:text-right">
-            Make it yours
+            {content.eyebrow}
           </p>
-          <h2 className="font-display mt-3 text-center text-4xl leading-snug text-olive sm:text-5xl md:text-right">
-            جرّب اسمك
-            <br />
-            على الصينية
-          </h2>
-          <p className="mt-4 text-center leading-loose text-cocoa-deep/70 md:text-right">اكتب، وشوف كيف رح تطلع صينيتك قبل ما تطلبها.</p>
+          <h2 className="font-display mt-3 text-center text-4xl leading-snug text-olive sm:text-5xl md:text-right">{content.title}</h2>
+          <p className="mt-4 text-center leading-loose text-cocoa-deep/70 md:text-right">{content.description}</p>
 
           <div className="mt-8 space-y-6">
-            <fieldset>
-              <legend className="mb-3 text-sm text-cocoa/70">المناسبة</legend>
-              <div className="flex flex-wrap gap-2">
-                {occasions.map((o) => (
-                  <button
-                    key={o}
-                    type="button"
-                    aria-pressed={occasion === o}
-                    onClick={() => setOccasion(o)}
-                    className={`rounded-full border px-4 py-2 text-sm transition ${
-                      occasion === o ? 'border-olive bg-olive text-parchment' : 'border-olive/25 bg-parchment/60 text-cocoa-deep/80 hover:border-olive/50'
-                    }`}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            {content.occasions.length > 0 && (
+              <fieldset>
+                <legend className="mb-3 text-sm text-cocoa/70">المناسبة</legend>
+                <div className="flex flex-wrap gap-2">
+                  {content.occasions.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      aria-pressed={occasion === o}
+                      onClick={() => setOccasion(o)}
+                      className={`rounded-full border px-4 py-2 text-sm transition ${
+                        occasion === o ? 'border-olive bg-olive text-parchment' : 'border-olive/25 bg-parchment/60 text-cocoa-deep/80 hover:border-olive/50'
+                      }`}
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
 
-            <label className="block">
-              <span className="text-sm text-cocoa/70">الاسم أو الأسماء</span>
-              <input
-                value={name}
-                maxLength={22}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="مثلًا: منى ومحمود"
-                className="font-display mt-1 w-full border-b border-olive/25 bg-transparent py-2 text-3xl text-cocoa-deep placeholder:text-cocoa/30 focus:border-olive focus:outline-none"
-              />
-            </label>
+            {fields.map((f) => (
+              <label key={f.id} className="block">
+                <span className="text-sm text-cocoa/70">{f.label}</span>
+                <input
+                  value={values[f.id] ?? ''}
+                  maxLength={f.maxLength}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.id]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  className="font-display mt-1 w-full border-b border-olive/25 bg-transparent py-2 text-3xl text-cocoa-deep placeholder:text-cocoa/30 focus:border-olive focus:outline-none"
+                />
+              </label>
+            ))}
 
-            <label className="block">
-              <span className="text-sm text-cocoa/70">التاريخ (اختياري)</span>
-              <input
-                value={date}
-                maxLength={12}
-                dir="ltr"
-                onChange={(e) => setDate(e.target.value)}
-                placeholder="25.9.26"
-                className="font-latin mt-1 w-full border-b border-olive/25 bg-transparent py-2 text-right text-2xl text-cocoa-deep placeholder:text-cocoa/30 focus:border-olive focus:outline-none"
-              />
-            </label>
+            {product.sizes.length > 1 && (
+              <fieldset>
+                <legend className="mb-3 text-sm text-cocoa/70">الحجم</legend>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      aria-pressed={size?.id === s.id}
+                      onClick={() => setSizeId(s.id)}
+                      className={`rounded-full border px-4 py-2 text-sm transition ${
+                        size?.id === s.id ? 'border-olive bg-olive text-parchment' : 'border-olive/25 bg-parchment/60 text-cocoa-deep/80 hover:border-olive/50'
+                      }`}
+                    >
+                      {s.label} · {formatPrice(s.price)}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
           </div>
 
-          {site && (
-            <a
-              href={whatsappLink(site.whatsapp, message)}
-              target="_blank"
-              rel="noreferrer"
-              className="group mt-9 flex w-full items-center justify-center gap-2 rounded-full bg-olive px-8 py-4 text-parchment shadow-[0_15px_35px_-15px_rgb(106_122_82/0.9)] transition hover:bg-olive-deep sm:w-auto sm:inline-flex"
+          <div className="mt-9 flex flex-col items-center gap-4 sm:flex-row md:items-center">
+            <button
+              type="button"
+              onClick={addToOrder}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-olive px-8 py-4 text-parchment shadow-[0_15px_35px_-15px_rgb(106_122_82/0.9)] transition hover:bg-olive-deep sm:w-auto"
             >
-              <MessageCircle className="size-5" aria-hidden />
-              اطلبها بهالاسم على واتساب
-              <Sparkles className="size-4 opacity-70 transition group-hover:rotate-12" aria-hidden />
-            </a>
-          )}
+              <ShoppingBag className="size-5" aria-hidden />
+              {content.buttonText}
+              {size && <span className="opacity-80">· {formatPrice(size.price)}</span>}
+            </button>
+            <Link to={`/product/${product.slug}`} className="inline-flex items-center gap-1.5 text-sm text-cocoa/70 hover:text-olive">
+              تفاصيل {product.name}
+              <ArrowLeft className="size-4" aria-hidden />
+            </Link>
+          </div>
         </motion.div>
       </div>
     </section>

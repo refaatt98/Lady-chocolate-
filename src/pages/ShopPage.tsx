@@ -7,6 +7,8 @@ import { DripRibbon } from '../components/DripRibbon'
 import { ProductCard } from '../components/ProductCard'
 import { getCategories, getProducts } from '../lib/api'
 import { useAsync } from '../lib/useAsync'
+import { useSite } from '../lib/site-context'
+import { defaultContent } from '../data/content'
 
 type Sort = 'default' | 'price-asc' | 'price-desc'
 
@@ -17,6 +19,7 @@ const sorts: { id: Sort; label: string }[] = [
 ]
 
 export function ShopPage() {
+  const site = useSite()
   const [params, setParams] = useSearchParams()
   const categorySlug = params.get('category') ?? ''
   const sort = (params.get('sort') as Sort) || 'default'
@@ -123,7 +126,7 @@ export function ShopPage() {
         )}
       </section>
 
-      <DripRibbon />
+      <DripRibbon words={(site?.content ?? defaultContent).ribbon.words} />
       <div className="h-16" />
     </>
   )

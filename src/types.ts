@@ -8,6 +8,8 @@ export interface Category {
   description: string
   /** لون الكرت المعلق (أي لون من tokens) */
   tone: 'milk' | 'dark' | 'white' | 'caramel' | 'olive'
+  /** لون حر للبتلة (#rrggbb) — إذا موجود بيغلب على tone */
+  color?: string
   sort?: number
 }
 
@@ -60,6 +62,10 @@ export interface Product {
   badge?: string
   /** مخفي عن الزبائن إذا false (بيضل بلوحة التحكم) */
   active?: boolean
+  /** "الحفظ والتقديم" — نص خاص بكل منتج */
+  storageNote?: string
+  /** إظهار خطوة "خصّصها" بصفحة المنتج */
+  customizationEnabled?: boolean
   sort?: number
 }
 
@@ -79,6 +85,24 @@ export interface SiteInfo {
   deliveryCities: string[]
   /** كم يوم لازم الطلب يكون قبل الموعد */
   minLeadDays: number
+  /** نصوص الصفحة الرئيسية — بتتعدّل من لوحة التحكم */
+  content: SiteContent
+}
+
+interface TitledText {
+  title: string
+  text: string
+}
+
+/** كل نصوص وصور الصفحة الرئيسية اللي بتتعدّل من لوحة التحكم ← محتوى الموقع */
+export interface SiteContent {
+  hero: { eyebrow: string; titleLine1: string; titleLine2: string; text: string; chips: string[]; primaryCta: string; secondaryCta: string }
+  ribbon: { words: string[] }
+  categories: { eyebrow: string; title: string; description: string; hint: string }
+  products: { eyebrow: string; title: string; description: string }
+  journey: { eyebrow: string; title: string; image: string; chapters: TitledText[] }
+  nameSection: { eyebrow: string; title: string; description: string; occasions: string[]; buttonText: string; productSlug: string }
+  howTo: { eyebrow: string; title: string; description: string; steps: TitledText[] }
 }
 
 /** سطر بالطلبية (السلة) — بينبعت كله برسالة واتساب وحدة */
@@ -128,6 +152,41 @@ export interface OrderRecord {
   status: OrderStatus
   adminNote: string
   createdAt: string
+  promoCode?: string
+  discount: number
+  deliveryFee: number
+}
+
+/** منطقة توصيل بسعرها (null = السعر بيتأكد على الواتساب) */
+export interface DeliveryZone {
+  id: string
+  name: string
+  price: number | null
+  active: boolean
+  sort: number
+}
+
+/** كود خصم (لوحة التحكم) */
+export interface PromoCode {
+  id: string
+  code: string
+  kind: 'percent' | 'fixed'
+  value: number
+  minTotal: number
+  maxUses?: number
+  uses: number
+  startsAt?: string
+  expiresAt?: string
+  active: boolean
+  note: string
+}
+
+/** كود خصم مطبّق على السلة */
+export interface AppliedPromo {
+  code: string
+  kind: 'percent' | 'fixed'
+  value: number
+  discount: number
 }
 
 /** شو بيبعت الأدمن لما يحفظ منتج (السعر بينحسب من أرخص حجم) */

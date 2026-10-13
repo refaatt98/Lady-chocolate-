@@ -1,7 +1,7 @@
-import { ChevronDown, Gift, MessageCircle, Phone, RefreshCw, Trash2 } from 'lucide-react'
+import { ChevronDown, Gift, MessageCircle, Phone, RefreshCw, ShoppingBag, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
-import { Button, TextArea, errorText, useToast } from '../../components/admin/ui'
+import { Button, PageHeader, TextArea, errorText, useToast } from '../../components/admin/ui'
 import { adminDeleteOrder, adminListOrders, adminUpdateOrder } from '../../lib/api'
 import { formatPrice, whatsappLink } from '../../lib/format'
 import { timeSlots } from '../../lib/order'
@@ -35,55 +35,61 @@ export function AdminOrders() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setOrders(await adminListOrders(filter || undefined))
+      setOrders(await adminListOrders())
     } catch (e) {
       toast(errorText(e), 'error')
     } finally {
       setLoading(false)
     }
-  }, [filter, toast])
+  }, [toast])
 
   useEffect(() => {
     load()
   }, [load])
 
+  const shown = (orders ?? []).filter((o) => !filter || o.status === filter)
   const patch = (id: string, change: Partial<OrderRecord>) => setOrders((list) => list?.map((o) => (o.id === id ? { ...o, ...change } : o)) ?? null)
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl text-olive">الطلبات</h1>
-          <p className="mt-1 text-sm text-cocoa/60">كل طلب بينبعت على الواتساب بينحفظ هون كمان.</p>
-        </div>
-        <Button variant="secondary" onClick={load} loading={loading}>
-          {!loading && <RefreshCw className="size-4" />} تحديث
-        </Button>
-      </div>
+      <PageHeader
+        icon={ShoppingBag}
+        title="الطلبات"
+        description="كل طلب بينبعت على الواتساب بينحفظ هون — أكّده، حضّره، وسلّمه."
+        actions={
+          <Button variant="secondary" onClick={load} loading={loading}>
+            {!loading && <RefreshCw className="size-4" />} تحديث
+          </Button>
+        }
+      />
 
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
-        {[{ id: '' as const, label: 'الكل' }, ...statuses].map((s) => (
-          <button
-            key={s.id || 'all'}
-            type="button"
-            onClick={() => setFilter(s.id)}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm transition ${filter === s.id ? 'bg-olive text-parchment' : 'bg-parchment text-cocoa-deep/75 hover:bg-sand/50'}`}
-          >
-            {s.label}
-          </button>
-        ))}
+        {[{ id: '' as const, label: 'الكل' }, ...statuses].map((s) => {
+          const n = s.id ? (orders ?? []).filter((o) => o.status === s.id).length : (orders ?? []).length
+          return (
+            <button
+              key={s.id || 'all'}
+              type="button"
+              onClick={() => setFilter(s.id)}
+              className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition ${filter === s.id ? 'bg-olive text-parchment' : 'bg-parchment text-cocoa-deep/75 hover:bg-sand/50'}`}
+            >
+              {s.label}
+              <span className={`grid min-w-5 place-items-center rounded-full px-1 text-xs ${filter === s.id ? 'bg-parchment/20' : 'bg-sand/70'}`}>{n}</span>
+            </button>
+          )
+        })}
       </div>
 
       {!orders ? (
         <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-sand/40" />)}</div>
-      ) : orders.length === 0 ? (
+      ) : shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-sand-deep/60 px-6 py-16 text-center">
           <p className="font-display text-3xl text-olive">ما في طلبات {filter ? `"${statusOf(filter).label}"` : 'لسا'}</p>
           <p className="mt-2 text-sm text-cocoa/60">أول ما حدا يطلب من الموقع، بيطلع هون.</p>
         </div>
       ) : (
         <ul className="space-y-3">
-          {orders.map((order) => (
+          {shown.map((order) => (
             <OrderRow
               key={order.id}
               order={order}
@@ -193,6 +199,17 @@ function OrderRow({ order, onChange, onDelete }: { order: OrderRecord; onChange:
                   <p className="flex items-start gap-1.5"><Gift className="mt-0.5 size-4 text-cocoa" /> هدية{info.giftMessage && <>: <span className="font-display text-base">"{info.giftMessage}"</span></>}</p>
                 )}
                 {info.notes && <p className="rounded-lg bg-caramel/15 px-3 py-2">📝 {info.notes}</p>}
+                {(order.discount > 0 || order.deliveryFee > 0) && (
+                  <div className="space-y-1 rounded-lg bg-cream/70 px-3 py-2 text-xs">
+                    {order.discount > 0 && (
+                      <p className="flex justify-between"><span>🏷️ كود {order.promoCode}</span><span>−{formatPrice(order.discount)}</span></p>
+                    )}
+                    {order.deliveryFee > 0 && (
+                      <p className="flex justify-between"><span>🚚 التوصيل</span><span>{formatPrice(order.deliveryFee)}</span></p>
+                    )}
+                    <p className="flex justify-between font-semibold"><span>المجموع</span><span>{formatPrice(order.total)}</span></p>
+                  </div>
+                )}
                 <p className="text-xs text-cocoa/50">انطلب {dateFmt.format(new Date(order.createdAt))}</p>
               </div>
             </div>
