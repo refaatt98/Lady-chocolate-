@@ -1,8 +1,9 @@
-import { ExternalLink, LayoutGrid, LogOut, Package, Settings, ShoppingBag, Tags } from 'lucide-react'
+import { ExternalLink, LayoutGrid, LogOut, Package, Settings, ShieldCheck, ShoppingBag, Tags } from 'lucide-react'
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router'
 import { Button, Card, Field, TextInput, ToastProvider, errorText } from '../../components/admin/ui'
-import { adminCountNewOrders, adminSignIn, adminSignOut, getAdminSession, isBackendConnected, onAuthChange } from '../../lib/api'
+import { adminCountNewOrders, adminSignIn, adminSignOut, getAdminSession, isBackendConnected, onAuthChange, setupFirstAdmin } from '../../lib/api'
+import { AdminAccounts } from './AdminAccounts'
 import { AdminCategories } from './AdminCategories'
 import { AdminOrders } from './AdminOrders'
 import { AdminProductEditor } from './AdminProductEditor'
@@ -55,6 +56,7 @@ export function AdminApp() {
           <Route path="products/:id" element={<AdminProductEditor />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="admins" element={<AdminAccounts />} />
           <Route path="*" element={<Navigate to="/admin/orders" replace />} />
         </Routes>
       </Shell>
@@ -69,6 +71,7 @@ const nav = [
   { to: '/admin/products', label: 'المنتجات', icon: Package },
   { to: '/admin/categories', label: 'الأقسام', icon: Tags },
   { to: '/admin/settings', label: 'الإعدادات', icon: Settings },
+  { to: '/admin/admins', label: 'المشرفين', icon: ShieldCheck },
 ]
 
 /** عدد الطلبات الجديدة — بيتحدّث كل ٣٠ ثانية، وبيطلع بعنوان التبويب كمان */
@@ -146,22 +149,32 @@ function Centered({ children }: { children: ReactNode }) {
 }
 
 function Login() {
+  const [mode, setMode] = useState<'login' | 'setup'>('login')
+  const [code, setCode] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+    if (mode === 'setup' && password !== confirm) return setError('كلمتين السر مش متطابقات')
     setLoading(true)
     try {
-      await adminSignIn(email, password)
+      if (mode === 'setup') await setupFirstAdmin(code, email, password)
+      else await adminSignIn(email, password)
     } catch (err) {
       setError(errorText(err))
     } finally {
       setLoading(false)
     }
+  }
+
+  const switchMode = (m: 'login' | 'setup') => {
+    setMode(m)
+    setError('')
   }
 
   return (
@@ -173,20 +186,55 @@ function Login() {
         </p>
       </div>
       <Card>
+        {mode === 'setup' && (
+          <div className="mb-5">
+            <h2 className="font-display text-2xl text-olive">تفعيل حسابك</h2>
+            <p className="mt-1 text-xs leading-relaxed text-cocoa/60">اكتب كود التفعيل، واختار الإيميل وكلمة السر اللي بدك تدخل فيهم. الكود بيشتغل مرة وحدة.</p>
+          </div>
+        )}
         <form onSubmit={submit} className="space-y-4">
+          {mode === 'setup' && (
+            <Field label="كود التفعيل">
+              <TextInput dir="ltr" required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="XXXXX-XXXXX" className="font-latin tracking-widest" />
+            </Field>
+          )}
           <Field label="الإيميل">
             <TextInput type="email" dir="ltr" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
-          <Field label="كلمة السر">
-            <TextInput type="password" dir="ltr" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Field label={mode === 'setup' ? 'كلمة السر الجديدة' : 'كلمة السر'} hint={mode === 'setup' ? '٨ حروف أو أكثر' : undefined}>
+            <TextInput
+              type="password"
+              dir="ltr"
+              autoComplete={mode === 'setup' ? 'new-password' : 'current-password'}
+              required
+              minLength={mode === 'setup' ? 8 : undefined}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </Field>
+          {mode === 'setup' && (
+            <Field label="أكّد كلمة السر">
+              <TextInput type="password" dir="ltr" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            </Field>
+          )}
           {error && <p className="rounded-xl bg-cocoa/10 px-3 py-2 text-sm text-cocoa">{error}</p>}
           <Button type="submit" loading={loading} className="w-full py-3">
-            دخول
+            {mode === 'setup' ? 'فعّل وادخل' : 'دخول'}
           </Button>
         </form>
       </Card>
-      <p className="mt-6 text-center text-xs text-cocoa/50">
+      <p className="mt-5 text-center text-sm">
+        {mode === 'login' ? (
+          <button type="button" onClick={() => switchMode('setup')} className="text-olive underline-offset-4 hover:underline">
+            أول مرة؟ فعّل حسابك بالكود
+          </button>
+        ) : (
+          <button type="button" onClick={() => switchMode('login')} className="text-olive underline-offset-4 hover:underline">
+            عندي حساب — رجوع للدخول
+          </button>
+        )}
+      </p>
+      <p className="mt-4 text-center text-xs text-cocoa/50">
         <Link to="/" className="hover:text-olive">← رجوع للموقع</Link>
       </p>
     </Centered>
@@ -198,7 +246,7 @@ function NotAdmin({ email }: { email: string }) {
     <Centered>
       <Card title="مش أدمن">
         <p className="text-sm leading-relaxed text-cocoa-deep/75">
-          دخلت بـ <span dir="ltr" className="font-medium">{email}</span>، بس هالحساب مش مضاف كأدمن. لازم ينضاف لجدول <code>admins</code> بـ Supabase.
+          دخلت بـ <span dir="ltr" className="font-medium">{email}</span>، بس هالحساب مش مشرف. اطلب من مشرف يضيفك من صفحة "المشرفين".
         </p>
         <Button variant="secondary" className="mt-5 w-full" onClick={adminSignOut}>
           دخول بحساب ثاني

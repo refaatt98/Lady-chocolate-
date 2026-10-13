@@ -344,6 +344,56 @@ export async function adminSignOut() {
   await supabase?.auth.signOut()
 }
 
+/** رسائل أغلاط دوال الأدمن بالعربي */
+const adminErrors: Record<string, string> = {
+  invalid_code: 'كود التفعيل غلط أو منتهي',
+  invalid_email: 'الإيميل مش صحيح',
+  weak_password: 'كلمة السر لازم تكون ٨ حروف أو أكثر',
+  not_admin: 'ما عندك صلاحية',
+}
+const adminError = (message: string) => new Error(Object.entries(adminErrors).find(([k]) => message.includes(k))?.[1] ?? message)
+
+/** أول أدمن: بكود التفعيل، وبعدها بيسجّل دخول فورًا */
+export async function setupFirstAdmin(code: string, email: string, password: string) {
+  const sb = requireBackend()
+  const { error } = await sb.rpc('setup_first_admin', { setup_code: code, admin_email: email, admin_password: password })
+  if (error) throw adminError(error.message)
+  await adminSignIn(email, password)
+}
+
+export interface AdminAccount {
+  userId: string
+  email: string
+  createdAt: string
+  lastSignInAt: string | null
+  isMe: boolean
+}
+
+export async function adminListAdmins(): Promise<AdminAccount[]> {
+  const sb = requireBackend()
+  const { data, error } = await sb.rpc('admin_list')
+  if (error) throw adminError(error.message)
+  return ((data ?? []) as { user_id: string; email: string; created_at: string; last_sign_in_at: string | null; is_me: boolean }[]).map((r) => ({
+    userId: r.user_id,
+    email: r.email,
+    createdAt: r.created_at,
+    lastSignInAt: r.last_sign_in_at,
+    isMe: r.is_me,
+  }))
+}
+
+/** إضافة أدمن جديد (أو تغيير كلمة سر أدمن موجود بنفس الإيميل) */
+export async function adminAddAdmin(email: string, password: string) {
+  const sb = requireBackend()
+  const { error } = await sb.rpc('admin_add', { admin_email: email, admin_password: password })
+  if (error) throw adminError(error.message)
+}
+
+export async function adminRemoveAdmin(userId: string) {
+  const sb = requireBackend()
+  check(await sb.from('admins').delete().eq('user_id', userId))
+}
+
 /** تغيير كلمة سر الأدمن المسجّل دخول */
 export async function adminChangePassword(password: string) {
   const sb = requireBackend()

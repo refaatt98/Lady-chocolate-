@@ -89,13 +89,15 @@ public/images/  صور المنتجات
 - **الأقسام:** الاسم، الرابط، لون البتلة، والترتيب.
 - **الإعدادات:** رقم الواتساب، العنوان، الدوام، مدن التوصيل، وأيام التحضير.
 
-### إضافة أدمن
+### المشرفين
 
-1. من لوحة Supabase: **Authentication ← Users ← Add user ← Create new user**. اكتب الإيميل وكلمة السر، واختار Auto Confirm.
-2. من **SQL Editor** شغّل:
-   ```sql
-   insert into public.admins (user_id)
-   select id from auth.users where email = 'your@email.com';
-   ```
-3. ادخل على `/admin`.
+- **أول مرة:** بصفحة `/admin` اكبس "أول مرة؟ فعّل حسابك بالكود"، واكتب كود التفعيل والإيميل وكلمة السر اللي بدك ياهم.
+  الكود بيشتغل مرة وحدة وبينتهي.
+- **أكثر من مشرف:** من **لوحة التحكم ← المشرفين**. بتضيف أي حدا بإيميل وكلمة سر، وبتقدر تشيل أي مشرف، بس مش حالك.
+- **كلمة السر:** كل مشرف بيغيّر كلمة سره من **الإعدادات ← حسابي**.
+- **كود جديد:** إذا احتجت كود تفعيل جديد، بينعمل من SQL Editor:
+  ```sql
+  insert into private.setup_codes (code_hash, expires_at)
+  values (extensions.crypt('NEW-CODE', extensions.gen_salt('bf')), now() + interval '7 days');
+  ```
 
