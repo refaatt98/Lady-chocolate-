@@ -1,0 +1,179 @@
+@import 'tailwindcss';
+
+/*
+ * ===== Design tokens =====
+ * كل الألوان والخطوط بمكان واحد. غيّر القيم هون وبتتغير بكل الموقع.
+ * كل لون بيصير متاح كـ class بتيلويند: bg-olive, text-cocoa, border-sand ...
+ */
+@theme {
+  /* ألوان الهوية */
+  --color-olive: #4a5639;
+  --color-olive-deep: #333c27;
+  --color-olive-soft: #6b7a55;
+  --color-sand: #c2b8a0;
+  --color-sand-deep: #a89d82;
+  --color-cream: #ede7da;
+  --color-parchment: #f6f2ea;
+
+  /* درجات الشوكولا */
+  --color-cocoa: #6b3e33;
+  --color-cocoa-deep: #3e241d;
+  --color-milk: #9a6a4f;
+  --color-caramel: #b8875f;
+
+  /* الخطوط */
+  --font-display: 'Aref Ruqaa', 'IBM Plex Sans Arabic', serif;
+  --font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-latin: 'Josefin Sans', 'IBM Plex Sans Arabic', sans-serif;
+
+  /* حركات */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-parchment font-sans text-cocoa-deep antialiased;
+    /* ملمس ورق قديم خفيف */
+    background-image:
+      radial-gradient(circle at 20% 10%, rgb(194 184 160 / 0.18), transparent 45%),
+      radial-gradient(circle at 85% 70%, rgb(107 62 51 / 0.06), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-olive text-cream;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-olive;
+  }
+}
+
+@layer components {
+  /* نص كاليغرافي مفرّغ للزخرفة بالخلفيات */
+  .calligraphy-outline {
+    font-family: var(--font-display);
+    color: transparent;
+    -webkit-text-stroke: 1.5px currentColor;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* إطار عتيق مزدوج */
+  .vintage-frame {
+    @apply relative;
+    box-shadow:
+      0 0 0 1px var(--color-sand-deep),
+      0 0 0 6px var(--color-parchment),
+      0 0 0 7px var(--color-sand-deep);
+  }
+}
+
+/* ===== أنيميشن نافورة الشوكولا ===== */
+@keyframes flow-down {
+  to {
+    stroke-dashoffset: -120;
+  }
+}
+
+@keyframes drip-fall {
+  0% {
+    transform: translateY(0) scaleY(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(var(--drip-distance, 40px)) scaleY(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(var(--drip-distance, 40px)) scaleY(0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes wobble {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.12);
+  }
+}
+
+@keyframes bubble {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.05);
+  }
+}
+
+.fountain-flow {
+  stroke-dasharray: 14 26;
+  animation: flow-down 1.6s linear infinite;
+}
+
+.fountain-drip {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: drip-fall 2.4s var(--ease-soft) infinite;
+}
+
+.fountain-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ripple 3s ease-out infinite;
+}
+
+.fountain-wobble {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: wobble 2.8s ease-in-out infinite;
+}
+
+.fountain-bubble {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: bubble 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fountain-flow,
+  .fountain-drip,
+  .fountain-ripple,
+  .fountain-wobble,
+  .fountain-bubble {
+    animation: none;
+  }
+}
