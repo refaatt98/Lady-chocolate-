@@ -344,6 +344,14 @@ export async function adminSignOut() {
   await supabase?.auth.signOut()
 }
 
+/** تغيير كلمة سر الأدمن المسجّل دخول */
+export async function adminChangePassword(password: string) {
+  const sb = requireBackend()
+  if (password.length < 8) throw new Error('كلمة السر لازم تكون ٨ حروف أو أكثر')
+  const { error } = await sb.auth.updateUser({ password })
+  if (error) throw new Error(error.message)
+}
+
 export function onAuthChange(callback: () => void) {
   if (!supabase) return () => {}
   const { data } = supabase.auth.onAuthStateChange(() => callback())
@@ -501,6 +509,14 @@ export async function adminListOrders(status?: OrderStatus): Promise<OrderRecord
   if (status) query = query.eq('status', status)
   const rows = check(await query) as OrderRow[]
   return rows.map(toOrder)
+}
+
+/** عدد الطلبات الجديدة (لعدّاد القائمة) */
+export async function adminCountNewOrders(): Promise<number> {
+  const sb = requireBackend()
+  const { count, error } = await sb.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'new')
+  if (error) throw new Error(error.message)
+  return count ?? 0
 }
 
 export async function adminUpdateOrder(id: string, patch: { status?: OrderStatus; adminNote?: string }) {

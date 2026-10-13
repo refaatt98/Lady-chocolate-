@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button, Card, Field, TagInput, TextArea, TextInput, errorText, useToast } from '../../components/admin/ui'
-import { adminSaveSettings, getSiteInfo } from '../../lib/api'
+import { adminChangePassword, adminSaveSettings, getSiteInfo } from '../../lib/api'
 import type { SiteInfo } from '../../types'
 
 export function AdminSettings() {
@@ -90,7 +90,49 @@ export function AdminSettings() {
         <Button onClick={save} loading={saving} className="px-10 py-3">
           حفظ الإعدادات
         </Button>
+
+        <PasswordCard />
       </div>
     </div>
+  )
+}
+
+/** حسابي: تغيير كلمة السر من لوحة التحكم */
+function PasswordCard() {
+  const toast = useToast()
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [saving, setSaving] = useState(false)
+  const mismatch = confirm.length > 0 && confirm !== password
+
+  const save = async () => {
+    if (password !== confirm) return toast('كلمتين السر مش متطابقات', 'error')
+    setSaving(true)
+    try {
+      await adminChangePassword(password)
+      setPassword('')
+      setConfirm('')
+      toast('تغيّرت كلمة السر')
+    } catch (e) {
+      toast(errorText(e), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Card title="حسابي" description="غيّر كلمة سر الدخول للوحة التحكم.">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="كلمة السر الجديدة" hint="٨ حروف أو أكثر">
+          <TextInput type="password" dir="ltr" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </Field>
+        <Field label="أكّد كلمة السر" error={mismatch ? 'مش متطابقة' : undefined}>
+          <TextInput type="password" dir="ltr" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        </Field>
+      </div>
+      <Button variant="secondary" onClick={save} loading={saving} disabled={password.length < 8 || mismatch} className="mt-4">
+        غيّر كلمة السر
+      </Button>
+    </Card>
   )
 }

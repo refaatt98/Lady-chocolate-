@@ -2,7 +2,7 @@ import { ExternalLink, LayoutGrid, LogOut, Package, Settings, ShoppingBag, Tags 
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router'
 import { Button, Card, Field, TextInput, ToastProvider, errorText } from '../../components/admin/ui'
-import { adminSignIn, adminSignOut, getAdminSession, isBackendConnected, onAuthChange } from '../../lib/api'
+import { adminCountNewOrders, adminSignIn, adminSignOut, getAdminSession, isBackendConnected, onAuthChange } from '../../lib/api'
 import { AdminCategories } from './AdminCategories'
 import { AdminOrders } from './AdminOrders'
 import { AdminProductEditor } from './AdminProductEditor'
@@ -71,7 +71,27 @@ const nav = [
   { to: '/admin/settings', label: 'الإعدادات', icon: Settings },
 ]
 
+/** عدد الطلبات الجديدة — بيتحدّث كل ٣٠ ثانية، وبيطلع بعنوان التبويب كمان */
+function useNewOrdersCount() {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    let alive = true
+    const tick = () => adminCountNewOrders().then((n) => alive && setCount(n)).catch(() => {})
+    tick()
+    const timer = setInterval(tick, 30000)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [])
+  useEffect(() => {
+    document.title = `${count ? `(${count}) ` : ''}لوحة التحكم | الليدي شوكولات`
+  }, [count])
+  return count
+}
+
 function Shell({ email, children }: { email: string; children: ReactNode }) {
+  const newOrders = useNewOrdersCount()
   return (
     <div className="min-h-dvh bg-cream/50 md:grid md:grid-cols-[15rem_1fr]">
       {/* القائمة — جانبية على الكمبيوتر، فوق على الموبايل */}
@@ -96,6 +116,9 @@ function Shell({ email, children }: { email: string; children: ReactNode }) {
             >
               <Icon className="size-4" />
               {label}
+              {to === '/admin/orders' && newOrders > 0 && (
+                <span className="ms-auto grid min-w-5 place-items-center rounded-full bg-caramel px-1.5 text-xs text-cocoa-deep">{newOrders}</span>
+              )}
             </NavLink>
           ))}
         </nav>
