@@ -23,7 +23,7 @@ import type {
   SiteInfo,
   TrayPreviewSpec,
 } from '../types'
-import { PRODUCT_IMAGES_BUCKET, supabase } from './supabase'
+import { supabase } from './supabase'
 
 export const isBackendConnected = () => supabase !== null
 
@@ -558,22 +558,41 @@ export async function adminDeleteProduct(id: string) {
 }
 
 /** رفع صورة منتج — بيرجّع الرابط العام */
-export async function adminUploadImage(file: Blob, name: string): Promise<string> {
-  const sb = requireBackend()
-  const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/png' ? 'png' : 'jpg'
-  const safe = name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9-]+/gi, '-').slice(0, 40) || 'image'
-  const path = `${new Date().toISOString().slice(0, 7)}/${Date.now()}-${safe}.${ext}`
-  check(await sb.storage.from(PRODUCT_IMAGES_BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000' }))
-  return sb.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl
+const uploadErrors: Record<string, string> = {
+  unsupported_type: 'نوع الصورة مش مدعوم — استعمل JPG أو PNG أو WEBP',
+  too_large: 'الصورة كبيرة كثير (أكثر من 8 ميغا)',
+  not_admin: 'ما عندك صلاحية',
+  unauthorized: 'لازم تسجّل دخول من جديد',
+  storage_not_configured: 'تخزين الصور مش مضبوط لسا',
 }
 
-/** حذف صورة من التخزين (بس إذا كانت مرفوعة على Supabase) */
+/** نص الغلط من دالة r2-upload */
+async function functionError(error: unknown): Promise<Error> {
+  const ctx = (error as { context?: Response })?.context
+  try {
+    const body = ctx ? await ctx.json() : null
+    if (body?.error) return new Error(uploadErrors[body.error] ?? body.error)
+  } catch {
+    /* مش JSON */
+  }
+  return new Error(error instanceof Error ? error.message : 'صار غلط بالرفع')
+}
+
+/** رفع صورة منتج على Cloudflare R2 (عبر دالة r2-upload) — بيرجّع الرابط العام */
+export async function adminUploadImage(file: Blob, name: string): Promise<string> {
+  const sb = requireBackend()
+  const { data, error } = await sb.functions.invoke<{ url: string }>('r2-upload', {
+    body: file,
+    headers: { 'Content-Type': file.type || 'image/jpeg', 'x-file-name': encodeURIComponent(name) },
+  })
+  if (error || !data?.url) throw await functionError(error)
+  return data.url
+}
+
+/** حذف صورة من R2 (الصور اللي مش على R2 بتنتجاهل) */
 export async function adminDeleteImage(url: string) {
   const sb = requireBackend()
-  const marker = `/object/public/${PRODUCT_IMAGES_BUCKET}/`
-  const i = url.indexOf(marker)
-  if (i === -1) return
-  await sb.storage.from(PRODUCT_IMAGES_BUCKET).remove([decodeURIComponent(url.slice(i + marker.length))])
+  await sb.functions.invoke('r2-upload', { body: { action: 'delete', url } })
 }
 
 /* ---------- الأقسام ---------- */

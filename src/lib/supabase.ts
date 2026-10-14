@@ -9,4 +9,5 @@ const key = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VI
 
 export const supabase: SupabaseClient | null = url && key ? createClient(url, key) : null
 
-export const PRODUCT_IMAGES_BUCKET = 'product-images'
+/** رابط صور Cloudflare R2 العام */
+export const R2_PUBLIC_URL = 'https://pub-79939cbe349c4177a41e142bd6c240b6.r2.dev'

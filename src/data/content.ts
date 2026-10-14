@@ -29,7 +29,7 @@ export const defaultContent: SiteContent = {
   journey: {
     eyebrow: 'Our Story',
     title: 'من الحبة للصينية',
-    image: '/images/products/tray-green-field.jpg',
+    image: 'https://pub-79939cbe349c4177a41e142bd6c240b6.r2.dev/products/tray-green-field.jpg',
     beanColor: '#9c7262',
     leafColor: '#626a46',
     chapters: [
