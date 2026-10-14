@@ -45,8 +45,10 @@ $$;
 
 update public.products
 set images = (select coalesce(array_agg(private.to_r2(u) order by ord), '{}') from unnest(images) with ordinality as t(u, ord)),
-    preview = case when preview ? 'image' then jsonb_set(preview, '{image}', to_jsonb(private.to_r2(preview->>'image'))) else preview end;
+    preview = case when preview ? 'image' then jsonb_set(preview, '{image}', to_jsonb(private.to_r2(preview->>'image'))) else preview end
+where exists (select 1 from unnest(images) u where u like '/images/products/%' or u like '%/product-images/%')
+   or preview->>'image' like '/images/products/%' or preview->>'image' like '%/product-images/%';
 
 update public.site_settings
 set content = jsonb_set(content, '{journey,image}', to_jsonb(private.to_r2(content->'journey'->>'image')))
-where content->'journey' ? 'image';
+where id = 1 and content->'journey' ? 'image';

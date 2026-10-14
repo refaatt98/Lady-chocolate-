@@ -71,7 +71,13 @@ public/images/  صور المنتجات
 هالمفاتيح آمنة بالموقع لأنه قواعد الحماية (RLS) بتحمي البيانات. مفتاح `service_role` ما بينحط أبدًا.
 
 - **الجداول:** `categories`، `products`، `product_sizes`، `product_fields`، `site_settings`، `orders`، `admins`.
-- **الصور:** بمكان تخزين اسمه `product-images`.
+- **الصور:** على **Cloudflare R2** (bucket `ladychoclate`)، ورابطها العام `pub-79939cbe349c4177a41e142bd6c240b6.r2.dev`.
+  الرفع والحذف من لوحة التحكم بيمرقوا عبر دالة `supabase/functions/r2-upload` بتتأكد إنه اللي عم يرفع أدمن.
+  مفاتيح R2 محفوظة مشفّرة بـ **Supabase Vault**، مش بالكود. لتغيير المفتاح:
+  ```sql
+  select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'r2_access_key_id';
+  select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'r2_secret_access_key';
+  ```
 - **ملفات SQL:** بـ `supabase/migrations/` بالترتيب، لو بدك تبني نفس القاعدة بمشروع جديد.
 - **الحماية:**
   - الزائر بيقرأ المنتجات الظاهرة والأقسام والإعدادات، وبيقدر يضيف طلب جديد بس.

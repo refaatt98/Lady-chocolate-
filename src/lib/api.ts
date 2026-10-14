@@ -585,21 +585,8 @@ export async function adminUploadImage(file: Blob, name: string): Promise<string
     body: file,
     headers: { 'Content-Type': file.type || 'image/jpeg', 'x-file-name': encodeURIComponent(name) },
   })
-  if (data?.url) return data.url
-  // الدالة لسا مش منشورة أو مفاتيح R2 مش مضبوطة؟ منرجع مؤقتًا لـ Supabase Storage عشان الرفع ما يوقف
-  const status = (error as { context?: Response } | null)?.context?.status
-  if (status === 404 || status === 500) return uploadToSupabaseStorage(file, name)
-  throw await functionError(error)
-}
-
-/** احتياط مؤقت: الرفع القديم على Supabase Storage */
-async function uploadToSupabaseStorage(file: Blob, name: string): Promise<string> {
-  const sb = requireBackend()
-  const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/png' ? 'png' : 'jpg'
-  const safe = name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9-]+/gi, '-').slice(0, 40) || 'image'
-  const path = `${new Date().toISOString().slice(0, 7)}/${Date.now()}-${safe}.${ext}`
-  check(await sb.storage.from('product-images').upload(path, file, { contentType: file.type, cacheControl: '31536000' }))
-  return sb.storage.from('product-images').getPublicUrl(path).data.publicUrl
+  if (error || !data?.url) throw await functionError(error)
+  return data.url
 }
 
 /** حذف صورة من R2 (الصور اللي مش على R2 بتنتجاهل) */
