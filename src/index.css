@@ -39,6 +39,14 @@
     scroll-behavior: smooth;
   }
 
+  /* على التلفون: كل الأحجام (نصوص، أزرار، مسافات) مبنية على rem،
+   * فتصغير خط الجذر بيصغّر الموقع كله بنفس النسبة — متل zoom out */
+  @media (max-width: 639px) {
+    html {
+      font-size: 87.5%;
+    }
+  }
+
   html,
   body {
     overflow-x: clip;
