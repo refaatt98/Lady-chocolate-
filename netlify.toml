@@ -1,64 +1,59 @@
-# ===== إعدادات Netlify =====
-# Netlify بيقرأ هالملف لحاله لما تربط الريبو من GitHub.
+Deploy failed for lady-chocolate
+A failure prevented us from deploying your project.
+Why did it fail?
+Update netlify.toml
+Today at 7:51 PM, by refaatt98refaatt98 on GitHub
 
+Production: claude/new-website-frontend-t43u4n@216a69c
+
+Retry
+Deploy settings
+Delete deploy
+Deploy log
+Why did it fail?
+
+
+
+
+Maximize log
+
+The build is failing at line 9 because Netlify is unable to read or parse the netlify.toml configuration file.
+
+Cause: The netlify.toml file exists in the repository but contains a syntax error or invalid configuration that Netlify cannot parse.
+
+Solution:
+
+Open netlify.toml in your repository and check for syntax errors.
+
+Ensure the file uses valid TOML syntax. Common mistakes include:
+
+# Correct example
 [build]
-  command = "npm ci && npm run build"
+  command = "npm run build"
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22"
-  NPM_FLAGS = "--no-audit --no-fund"
+  NODE_VERSION = "18"
+Watch out for:
 
-# --- تحويلات ---
+Unclosed brackets or quotes
+Invalid characters
+Incorrect indentation (though TOML is not indent-sensitive, mixed formatting can cause issues)
+Duplicate keys
+You can validate your netlify.toml using an online TOML validator such as https://www.toml-lint.com/ before committing.
 
-# الرابط القديم/المختصر للطلبية
-[[redirects]]
-  from = "/order"
-  to = "/cart"
-  status = 301
+Once the syntax is corrected and committed, re-trigger the build.
 
-[[redirects]]
-  from = "/products"
-  to = "/shop"
-  status = 301
 
-[[redirects]]
-  from = "/products/:slug"
-  to = "/product/:slug"
-  status = 301
+Fix with agent
 
-# React Router: تحويل المسارات إلى index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+Copy analysis
+Need more help? Go to Ask Netlify
 
-# --- التخزين المؤقت ---
+Retry diagnostics
+Netlify uses AI to analyze and generate solutions to fix deploy failures. It may not always understand the full context or produce a reliable, accurate answer. To learn more, please refer to our docs.
 
-# ملفات assets
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+Did you find this helpful? Your feedback helps improve this feature.
 
-# الصور
-[[headers]]
-  for = "/images/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800"
 
-# تحديث index.html باستمرار
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
 
-# --- هيدرز الأمان والسماح بالتضمين ---
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Content-Security-Policy = "frame-ancestors *"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()
