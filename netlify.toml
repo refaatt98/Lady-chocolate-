@@ -1,5 +1,5 @@
 # ===== إعدادات Netlify =====
-# Netlify بيقرأ هالملف لحاله لما تربط الريبو من GitHub — ما في داعي تعبي إشي باللوحة.
+# Netlify بيقرأ هالملف لحاله لما تربط الريبو من GitHub.
 
 [build]
   command = "npm ci && npm run build"
@@ -10,6 +10,7 @@
   NPM_FLAGS = "--no-audit --no-fund"
 
 # --- تحويلات ---
+
 # الرابط القديم/المختصر للطلبية
 [[redirects]]
   from = "/order"
@@ -26,34 +27,38 @@
   to = "/product/:slug"
   status = 301
 
-# React Router: أي مسار ما إله ملف بيرجع لـ index.html (لازم يكون آخر وحدة)
+# React Router: تحويل المسارات إلى index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# --- هيدرز ---
-# ملفات assets إلها hash بالاسم، فمنخزّنها بالمتصفح سنة كاملة
+# --- التخزين المؤقت ---
+
+# ملفات assets
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# الصور
 [[headers]]
   for = "/images/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
-# index.html دايمًا يتحدّث عشان التعديلات توصل فورًا
+# تحديث index.html باستمرار
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# --- هيدرز الأمان والسماح بالتضمين ---
+
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors *"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()
