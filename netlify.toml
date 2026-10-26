@@ -1,6 +1,5 @@
-# ===== إعدادات Netlify =====
-# Netlify بيقرأ هالملف لحاله لما تربط الريبو من GitHub — ما في داعي تعبي إشي باللوحة.
 
+# Netlify build settings
 [build]
   command = "npm ci && npm run build"
   publish = "dist"
@@ -9,8 +8,7 @@
   NODE_VERSION = "22"
   NPM_FLAGS = "--no-audit --no-fund"
 
-# --- تحويلات ---
-# الرابط القديم/المختصر للطلبية
+# Redirects
 [[redirects]]
   from = "/order"
   to = "/cart"
@@ -26,14 +24,13 @@
   to = "/product/:slug"
   status = 301
 
-# React Router: أي مسار ما إله ملف بيرجع لـ index.html (لازم يكون آخر وحدة)
+# React SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# --- هيدرز ---
-# ملفات assets إلها hash بالاسم، فمنخزّنها بالمتصفح سنة كاملة
+# Asset caching
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -44,16 +41,16 @@
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
-# index.html دايمًا يتحدّث عشان التعديلات توصل فورًا
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors *"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
