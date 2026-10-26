@@ -3,8 +3,10 @@ import { motion, useInView, useMotionValue, useSpring, useTransform } from 'moti
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { Link } from 'react-router'
 import { formatPrice } from '../lib/format'
+import { isLowStock, isSoldOut, leftLabel, stockLeft } from '../lib/stock'
 import type { Product } from '../types'
 import { BrandPattern } from './BrandPattern'
+import { SoldOutStamp } from './SoldOutStamp'
 
 const ease = [0.65, 0, 0.35, 1] as const
 
@@ -17,6 +19,8 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, amount: 0.55 })
   const [opened, setOpened] = useState(false)
+  const soldOut = isSoldOut(product)
+  const low = isLowStock(product)
 
   useEffect(() => {
     if (!inView) return
@@ -61,7 +65,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                 initial={{ scale: 1.25 }}
                 animate={{ scale: opened ? 1 : 1.25 }}
                 transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-                className="size-full object-cover object-[center_62%] transition-[filter] duration-700 group-hover:brightness-105"
+                className={`size-full object-cover object-[center_62%] transition-[filter] duration-700 ${soldOut ? 'grayscale-[0.7] sepia-[0.35]' : 'group-hover:brightness-105'}`}
               />
 
               {/* ورق التغليف — نصين بينفتحوا */}
@@ -97,6 +101,8 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                   <circle cx="40" cy="25" r="5" fill="var(--color-cocoa)" />
                 </svg>
               </motion.div>
+
+              {soldOut && <SoldOutStamp show={opened} />}
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 rounded-b-xl bg-gradient-to-t sm:rounded-b-2xl from-cocoa-deep/35 to-transparent" />
           </div>
@@ -113,13 +119,19 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             <span className="relative grid size-12 place-items-center rounded-full sm:size-[4.75rem] bg-parchment text-center shadow-[0_8px_20px_-8px_rgb(92_59_47/0.25)] ring-1 ring-sand-deep">
               <span aria-hidden className="absolute top-1 size-1.5 rounded-full border border-sand-deep sm:top-1.5 sm:size-2" />
               <span className="mt-1 text-[0.5rem] leading-none text-cocoa/70 sm:mt-1.5 sm:text-[0.65rem]">من</span>
-              <span className="text-[0.62rem] leading-none font-semibold whitespace-nowrap text-cocoa sm:text-sm">{formatPrice(product.price)}</span>
+              <span className={`text-[0.62rem] leading-none font-semibold whitespace-nowrap sm:text-sm ${soldOut ? 'text-cocoa/45 line-through decoration-cocoa/40' : 'text-cocoa'}`}>{formatPrice(product.price)}</span>
             </span>
           </div>
         </motion.div>
 
         <div className="mt-7 px-0.5 sm:mt-10 sm:px-1">
           <h3 className="font-display text-[0.95rem] leading-snug text-olive transition-colors group-hover:text-cocoa sm:text-2xl lg:text-[1.7rem]">{product.name}</h3>
+          {low && (
+            <span className="mt-1.5 inline-flex items-center gap-1 text-[0.62rem] text-cocoa sm:mt-2 sm:text-xs">
+              <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-cocoa" />
+              {leftLabel(stockLeft(product)!)}
+            </span>
+          )}
           <p className="mt-2 line-clamp-2 hidden text-sm leading-relaxed text-cocoa-deep/70 sm:block">{product.shortDescription}</p>
           <span className="mt-4 hidden items-center gap-2 text-sm text-cocoa sm:inline-flex">
             شوف التفاصيل

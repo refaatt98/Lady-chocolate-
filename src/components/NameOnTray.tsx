@@ -8,6 +8,7 @@ import { useOrder } from '../lib/order'
 import { useAsync } from '../lib/useAsync'
 import type { SiteContent } from '../types'
 import { BrandPattern } from './BrandPattern'
+import { isSoldOut } from '../lib/stock'
 import { TrayPreview } from './TrayPreview'
 
 const stripExample = (s: string) => s.replace(/^مثلًا:\s*/, '')
@@ -154,6 +155,12 @@ export function NameOnTray({ content }: { content: SiteContent['nameSection'] })
           </div>
 
           <div className="mt-9 flex flex-col items-center gap-4 sm:flex-row md:items-center">
+            {isSoldOut(product) ? (
+              <span className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-cocoa/35 bg-cream/70 px-8 py-4 text-cocoa sm:w-auto">
+                <span className="font-display text-xl">نفذت الكمية</span>
+                <span dir="ltr" className="font-latin text-[0.6rem] tracking-[0.35em] text-cocoa/50">SOLD OUT</span>
+              </span>
+            ) : (
             <button
               type="button"
               onClick={addToOrder}
@@ -163,6 +170,7 @@ export function NameOnTray({ content }: { content: SiteContent['nameSection'] })
               {content.buttonText}
               {size && <span className="opacity-80">· {formatPrice(size.price)}</span>}
             </button>
+            )}
             <Link to={`/product/${product.slug}`} className="inline-flex items-center gap-1.5 text-sm text-cocoa/70 hover:text-olive">
               تفاصيل {product.name}
               <ArrowLeft className="size-4" aria-hidden />

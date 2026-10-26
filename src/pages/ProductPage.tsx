@@ -8,7 +8,10 @@ import { ProductCard } from '../components/ProductCard'
 import { SizePicker } from '../components/SizePicker'
 import { TrayPreview } from '../components/TrayPreview'
 import { getCategories, getProductBySlug, getProducts } from '../lib/api'
-import { formatPrice } from '../lib/format'
+import { formatPrice, whatsappLink } from '../lib/format'
+import { isSoldOut, leftLabel, stockLeft, LOW_STOCK } from '../lib/stock'
+import { useSite } from '../lib/site-context'
+import { LowStockTag, SoldOutStamp } from '../components/SoldOutStamp'
 import { useOrder } from '../lib/order'
 import { useAsync } from '../lib/useAsync'
 import type { Product } from '../types'
@@ -35,6 +38,14 @@ function ProductView({ product }: { product: Product }) {
   const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? '')
   const size = product.sizes.find((s) => s.id === sizeId) ?? product.sizes[0]
   const [qty, setQty] = useState(1)
+  const site = useSite()
+
+  // المخزون: الموجود ناقص اللي صار بالسلة من نفس المنتج
+  const left = stockLeft(product)
+  const soldOut = isSoldOut(product)
+  const inCart = order.items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.qty, 0)
+  const available = left === null ? Infinity : Math.max(0, left - inCart)
+  const canAdd = !soldOut && qty <= available
   const [values, setValues] = useState<Record<string, string>>({})
   const [note, setNote] = useState('')
   const [view, setView] = useState<'photo' | 'preview'>('photo')
@@ -64,6 +75,7 @@ function ProductView({ product }: { product: Product }) {
   const addVisible = useInView(addRef, { margin: '0px 0px -40px 0px' })
 
   const handleAdd = (e: MouseEvent<HTMLButtonElement>) => {
+    if (!canAdd) return
     order.add(item)
     const bag = document.getElementById('order-bag')
     if (bag) setFlight({ from: e.currentTarget.getBoundingClientRect(), to: bag.getBoundingClientRect() })
@@ -107,7 +119,7 @@ function ProductView({ product }: { product: Product }) {
       <section className="mx-auto grid max-w-6xl gap-10 px-4 pt-6 pb-16 sm:px-6 md:grid-cols-2 md:gap-14 md:pt-10">
         {/* ---------------- المعرض ---------------- */}
         <div className="md:sticky md:top-24 md:self-start">
-          <Gallery product={product} view={view} setView={setView} values={values} />
+          <Gallery product={product} view={view} setView={setView} values={values} soldOut={soldOut} />
         </div>
 
         {/* ---------------- التفاصيل ---------------- */}
@@ -129,6 +141,7 @@ function ProductView({ product }: { product: Product }) {
               <AnimatedPrice value={unitPrice * qty} className="font-display text-4xl text-cocoa" />
               {qty > 1 && <span className="text-sm text-cocoa/60">({formatPrice(unitPrice)} للوحدة)</span>}
             </div>
+            {left !== null && left > 0 && left <= LOW_STOCK && <LowStockTag label={leftLabel(left)} className="mt-3" />}
           </motion.div>
 
           <div className="mt-10 space-y-10">
@@ -197,30 +210,41 @@ function ProductView({ product }: { product: Product }) {
             {/* الكمية والطلب */}
             <Step n={fields.length ? '٤' : '٣'} title="الكمية">
               <div ref={addRef} className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center rounded-full border border-sand-deep/70">
-                    <button type="button" onClick={() => setQty((q) => q + 1)} aria-label="زيادة" className="grid size-12 place-items-center text-olive">
-                      <Plus className="size-4" />
+                {soldOut ? (
+                  <SoldOutPanel whatsapp={site?.whatsapp} productName={product.name} />
+                ) : (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center rounded-full border border-sand-deep/70">
+                        <button type="button" onClick={() => setQty((q) => Math.min(q + 1, Math.max(1, available)))} aria-label="زيادة" className="grid size-12 place-items-center text-olive disabled:opacity-30" disabled={qty >= available}>
+                          <Plus className="size-4" />
+                        </button>
+                        <span className="w-8 text-center text-lg tabular-nums">{qty}</span>
+                        <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="إنقاص" className="grid size-12 place-items-center text-olive disabled:opacity-30" disabled={qty <= 1}>
+                          <Minus className="size-4" />
+                        </button>
+                      </div>
+                      <AddButton onClick={handleAdd} added={added} disabled={!canAdd} className="flex-1" />
+                    </div>
+                    {available === 0 ? (
+                      <p className="rounded-2xl bg-cream px-4 py-3 text-center text-sm text-cocoa">كل الكمية الموجودة صارت بطلبيتك 🤍</p>
+                    ) : (
+                      left !== null && qty >= available && <p className="text-center text-xs text-cocoa/60">هاد أكتر إشي موجود حالياً</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (canAdd) order.add(item)
+                        navigate('/cart')
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-full border border-olive/40 py-3.5 text-olive transition hover:border-olive hover:bg-olive/5"
+                    >
+                      <MessageCircle className="size-4" aria-hidden />
+                      {canAdd ? 'اطلبها هلأ — كمّل معلومات التوصيل' : 'روح عالطلبية'}
                     </button>
-                    <span className="w-8 text-center text-lg tabular-nums">{qty}</span>
-                    <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="إنقاص" className="grid size-12 place-items-center text-olive disabled:opacity-30" disabled={qty <= 1}>
-                      <Minus className="size-4" />
-                    </button>
-                  </div>
-                  <AddButton onClick={handleAdd} added={added} className="flex-1" />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    order.add(item)
-                    navigate('/cart')
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-olive/40 py-3.5 text-olive transition hover:border-olive hover:bg-olive/5"
-                >
-                  <MessageCircle className="size-4" aria-hidden />
-                  اطلبها هلأ — كمّل معلومات التوصيل
-                </button>
-                <p className="text-center text-xs text-cocoa/50">بتنعمل على الطلب — السعر النهائي وموعد التسليم منأكدهم معك.</p>
+                    <p className="text-center text-xs text-cocoa/50">بتنعمل على الطلب — السعر النهائي وموعد التسليم منأكدهم معك.</p>
+                  </>
+                )}
               </div>
             </Step>
           </div>
@@ -250,7 +274,7 @@ function ProductView({ product }: { product: Product }) {
 
       {/* شريط ثابت تحت — موبايل */}
       <AnimatePresence>
-        {!addVisible && (
+        {!addVisible && !soldOut && (
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -263,7 +287,7 @@ function ProductView({ product }: { product: Product }) {
                 <p className="truncate text-xs text-cocoa/60">{product.name} · {size?.label}</p>
                 <AnimatedPrice value={unitPrice * qty} className="font-display text-2xl text-cocoa" />
               </div>
-              <AddButton onClick={handleAdd} added={added} className="flex-1" compact />
+              <AddButton onClick={handleAdd} added={added} disabled={!canAdd} className="flex-1" compact />
             </div>
           </motion.div>
         )}
@@ -321,11 +345,13 @@ function Gallery({
   view,
   setView,
   values,
+  soldOut = false,
 }: {
   product: Product
   view: 'photo' | 'preview'
   setView: (v: 'photo' | 'preview') => void
   values: Record<string, string>
+  soldOut?: boolean
 }) {
   const [index, setIndex] = useState(0)
   // المعاينة بس إذا خطوة التخصيص ظاهرة
@@ -368,7 +394,7 @@ function Gallery({
               exit={{ rotateY: 90, opacity: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <Magnifier src={product.images[index]} alt={product.name} />
+              <Magnifier src={product.images[index]} alt={product.name} soldOut={soldOut} />
             </motion.div>
           ) : (
             <motion.div
@@ -414,7 +440,7 @@ function Gallery({
 }
 
 /** صورة بقوس عتيق، ومع الماوس بتطلع عدسة تكبير دائرية متل عدسة الصايغ */
-function Magnifier({ src, alt }: { src: string; alt: string }) {
+function Magnifier({ src, alt, soldOut = false }: { src: string; alt: string; soldOut?: boolean }) {
   const [lens, setLens] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const [natural, setNatural] = useState({ w: 9, h: 16 })
   const ZOOM = 2.4
@@ -448,8 +474,9 @@ function Magnifier({ src, alt }: { src: string; alt: string }) {
         src={src}
         alt={alt}
         onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
-        className="aspect-[4/5] w-full object-cover object-[center_62%]"
+        className={`aspect-[4/5] w-full object-cover object-[center_62%] ${soldOut ? 'grayscale-[0.7] sepia-[0.35]' : ''}`}
       />
+      {soldOut && <SoldOutStamp size="lg" />}
       <AnimatePresence>
         {lens && bg && (
           <motion.div
@@ -475,12 +502,13 @@ function Magnifier({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-function AddButton({ onClick, added, className = '', compact = false }: { onClick: (e: MouseEvent<HTMLButtonElement>) => void; added: boolean; className?: string; compact?: boolean }) {
+function AddButton({ onClick, added, className = '', compact = false, disabled = false }: { onClick: (e: MouseEvent<HTMLButtonElement>) => void; added: boolean; className?: string; compact?: boolean; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa text-cream shadow-[0_12px_30px_-12px_rgb(139_90_71/0.45)] ${compact ? 'py-3.5' : 'py-4'} ${className}`}
+      disabled={disabled}
+      className={`group relative disabled:cursor-not-allowed disabled:opacity-45 flex items-center justify-center gap-2 overflow-hidden rounded-full bg-cocoa text-cream shadow-[0_12px_30px_-12px_rgb(139_90_71/0.45)] ${compact ? 'py-3.5' : 'py-4'} ${className}`}
     >
       <span className="absolute inset-0 translate-y-full rounded-[50%_50%_0_0] bg-cocoa-deep transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-0 group-hover:rounded-none" />
       <AnimatePresence mode="wait" initial={false}>
@@ -496,6 +524,28 @@ function AddButton({ onClick, added, className = '', compact = false }: { onClic
         </motion.span>
       </AnimatePresence>
     </button>
+  )
+}
+
+/** بدل زر الإضافة لما المنتج ينفذ */
+function SoldOutPanel({ whatsapp, productName }: { whatsapp?: string; productName: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] border border-dashed border-cocoa/30 bg-cream/70 px-6 py-7 text-center">
+      <p dir="ltr" className="font-latin text-[0.65rem] tracking-[0.45em] text-cocoa/50 uppercase">Sold out</p>
+      <p className="font-display mt-2 text-3xl text-cocoa">نفذت الكمية</p>
+      <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-cocoa-deep/70">هالصينية خلصت هالمرة — بنحضّر غيرها قريباً. احكينا وبنخبرك أول ما ترجع.</p>
+      {whatsapp && (
+        <a
+          href={whatsappLink(whatsapp, `مرحبا 🤍 بدي أعرف إمتى بترجع «${productName}»`)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-olive px-6 py-3 text-sm text-parchment transition hover:bg-olive-deep"
+        >
+          <MessageCircle className="size-4" aria-hidden />
+          خبّروني لما ترجع
+        </a>
+      )}
+    </div>
   )
 }
 

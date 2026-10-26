@@ -1,4 +1,4 @@
-import { ExternalLink, Flower2, LayoutDashboard, LogOut, Menu, Package, PenSquare, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck } from 'lucide-react'
+import { Boxes, ExternalLink, Flower2, LayoutDashboard, LogOut, Menu, Package, PenSquare, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
@@ -11,6 +11,7 @@ import { AdminContent } from './AdminContent'
 import { AdminDelivery } from './AdminDelivery'
 import { AdminOverview } from './AdminOverview'
 import { AdminPromos } from './AdminPromos'
+import { AdminStock } from './AdminStock'
 import { AdminOrders } from './AdminOrders'
 import { AdminProductEditor } from './AdminProductEditor'
 import { AdminProducts } from './AdminProducts'
@@ -65,6 +66,7 @@ export function AdminApp() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="delivery" element={<AdminDelivery />} />
           <Route path="promos" element={<AdminPromos />} />
+          <Route path="stock" element={<AdminStock />} />
           <Route path="content" element={<AdminContent />} />
           <Route path="admins" element={<AdminAccounts />} />
           <Route path="*" element={<Navigate to="/admin/overview" replace />} />
@@ -88,6 +90,7 @@ const navGroups = [
     title: 'المتجر',
     items: [
       { to: '/admin/products', label: 'المنتجات', icon: Package },
+      { to: '/admin/stock', label: 'المخزون', icon: Boxes },
       { to: '/admin/categories', label: 'الأقسام', icon: Flower2 },
       { to: '/admin/delivery', label: 'التوصيل', icon: Truck },
       { to: '/admin/promos', label: 'أكواد الخصم', icon: TicketPercent },

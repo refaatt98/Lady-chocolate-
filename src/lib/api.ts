@@ -75,6 +75,8 @@ interface ProductRow {
   preview: TrayPreviewSpec | null
   storage_note: string | null
   customization_enabled: boolean | null
+  track_stock?: boolean
+  stock?: number
   product_sizes?: SizeRow[]
   product_fields?: FieldRow[]
 }
@@ -153,6 +155,8 @@ const toProduct = (r: ProductRow): Product => {
     sort: r.sort,
     storageNote: r.storage_note ?? undefined,
     customizationEnabled: r.customization_enabled ?? true,
+    trackStock: r.track_stock ?? false,
+    stock: r.stock ?? 0,
   }
 }
 
@@ -317,6 +321,14 @@ const newReference = () => {
   return `LC-${stamp}${rand}`
 }
 
+export class OutOfStockError extends Error {
+  productName: string
+  constructor(productName: string) {
+    super(productName ? `«${productName}» نفذت كميته، أو الكمية المطلوبة أكتر من الموجود` : 'في منتج بالطلب نفذت كميته')
+    this.productName = productName
+  }
+}
+
 /**
  * تسجيل طلبية بجدول orders، وبيرجع رقم الطلب (بينكتب برسالة الواتساب).
  * إذا الحفظ فشل، ما منوقف الزبون — الطلب بيوصل على الواتساب بكل الأحوال.
@@ -344,7 +356,11 @@ export async function submitOrder(order: {
     promo_code: order.promo?.code ?? null,
     delivery_fee: order.deliveryFee ?? 0,
   })
-  if (error) console.warn('ما انحفظ الطلب بقاعدة البيانات:', error.message)
+  if (error) {
+    // منتج نفذ أو الكمية ما بتكفي — منوقف الطلب ومنحكي للزبون
+    if (error.message.includes('out_of_stock')) throw new OutOfStockError((error as { details?: string }).details ?? '')
+    console.warn('ما انحفظ الطلب بقاعدة البيانات:', error.message)
+  }
   return { reference }
 }
 
@@ -550,6 +566,15 @@ export async function adminSaveProduct(input: ProductInput): Promise<string> {
 export async function adminUpdateProduct(id: string, patch: { active?: boolean; featured?: boolean; sort?: number }) {
   const sb = requireBackend()
   check(await sb.from('products').update(patch).eq('id', id))
+}
+
+/** المخزون: تفعيل التتبّع و/أو تعديل الكمية */
+export async function adminSetStock(id: string, patch: { trackStock?: boolean; stock?: number }) {
+  const sb = requireBackend()
+  const row: { track_stock?: boolean; stock?: number } = {}
+  if (patch.trackStock !== undefined) row.track_stock = patch.trackStock
+  if (patch.stock !== undefined) row.stock = Math.max(0, Math.floor(patch.stock))
+  check(await sb.from('products').update(row).eq('id', id))
 }
 
 export async function adminDeleteProduct(id: string) {

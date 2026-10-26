@@ -67,6 +67,10 @@ export interface Product {
   /** إظهار خطوة "خصّصها" بصفحة المنتج */
   customizationEnabled?: boolean
   sort?: number
+  /** تتبّع الكمية لهالمنتج (الأدمن بيفعّله من تاب المخزون) */
+  trackStock?: boolean
+  /** الكمية الموجودة — بتنقص لما الطلب يتأكد */
+  stock?: number
 }
 
 export interface SiteInfo {

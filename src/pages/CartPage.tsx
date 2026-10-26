@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ChocolatePetal } from '../components/ChocolatePetal'
-import { checkPromo, getDeliveryZones, submitOrder } from '../lib/api'
+import { checkPromo, getDeliveryZones, OutOfStockError, submitOrder } from '../lib/api'
 import { useAsync } from '../lib/useAsync'
 import { CURRENCY, formatPrice, whatsappLink } from '../lib/format'
 import { orderMessage, timeSlots, useOrder, validateCheckout, type CheckoutErrors } from '../lib/order'
@@ -28,6 +28,7 @@ export function CartPage() {
   const navigate = useNavigate()
   const [errors, setErrors] = useState<CheckoutErrors>({})
   const [sending, setSending] = useState(false)
+  const [stockError, setStockError] = useState('')
   const [sent, setSent] = useState<{ reference: string; url: string } | null>(null)
   const [showPreview, setShowPreview] = useState(false)
 
@@ -53,14 +54,16 @@ export function CartPage() {
     // منفتح النافذة فورًا (قبل الـ await) عشان المتصفح ما يمنعها
     const win = window.open('', '_blank')
     setSending(true)
+    setStockError('')
     try {
       const { reference } = await submitOrder({ items, info, total: finalTotal, promo, deliveryFee: typeof deliveryFee === 'number' ? deliveryFee : 0 })
       const url = whatsappLink(site.whatsapp, orderMessage(items, total, CURRENCY, info, reference, promo, deliveryFee))
       if (win) win.location.href = url
       else window.location.href = url
       setSent({ reference, url })
-    } catch {
+    } catch (e) {
       win?.close()
+      if (e instanceof OutOfStockError) setStockError(e.message)
     } finally {
       setSending(false)
     }
@@ -302,6 +305,11 @@ export function CartPage() {
               <MessageCircle className="size-5" aria-hidden />
               {sending ? 'لحظة...' : 'ابعت الطلب على واتساب'}
             </button>
+            {stockError && (
+              <p role="alert" className="mt-3 rounded-2xl border border-dashed border-cocoa/30 bg-cream px-4 py-3 text-center text-sm leading-relaxed text-cocoa">
+                {stockError} — عدّل الكمية أو شيله من الطلبية وجرّب كمان مرة.
+              </p>
+            )}
             {Object.keys(errors).length > 0 && <p className="mt-3 text-center text-sm text-cocoa">في كم خانة ناقصة فوق — صلّحها وجرّب كمان مرة</p>}
 
             <button type="button" onClick={() => setShowPreview((v) => !v)} className="mt-5 flex w-full items-center justify-center gap-1 text-xs text-cocoa/60 hover:text-cocoa">

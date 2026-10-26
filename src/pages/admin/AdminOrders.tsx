@@ -9,7 +9,7 @@ import type { OrderRecord, OrderStatus } from '../../types'
 
 export const statuses: { id: OrderStatus; label: string; cls: string }[] = [
   { id: 'new', label: 'جديد', cls: 'bg-caramel/25 text-cocoa' },
-  { id: 'preparing', label: 'قيد التحضير', cls: 'bg-sand text-cocoa-deep' },
+  { id: 'preparing', label: 'مؤكَّد · قيد التحضير', cls: 'bg-sand text-cocoa-deep' },
   { id: 'ready', label: 'جاهز', cls: 'bg-olive-soft/30 text-olive-deep' },
   { id: 'delivered', label: 'انسلّم', cls: 'bg-olive text-parchment' },
   { id: 'cancelled', label: 'ملغي', cls: 'bg-cocoa/10 text-cocoa/60 line-through' },
